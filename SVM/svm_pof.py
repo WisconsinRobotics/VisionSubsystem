@@ -24,8 +24,13 @@ d_img = np.reshape(gray_img, (1,np.product(gray_img.shape)))
 height, width = d_img.shape[:2]
 
 # get features
-feature_extractor.extractYellowness(gray_img)
-#feature_extractor.extractCircles(blur_gray_img)
+# features structure:
+# - @0: yellowness
+# - @1: circle existence
+features = []
+
+features.append(feature_extractor.extractYellowness(img))
+features.append(feature_extractor.extractCircles(blur_gray_img))
 
 #DEBUG
 print(str(height) + "x" + str(width))

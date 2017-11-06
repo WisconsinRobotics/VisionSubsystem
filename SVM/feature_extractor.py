@@ -9,22 +9,40 @@ import cv2
 import numpy as np
 
 def extractYellowness(image):
-    norm_img = image
-    #cv2.normalize(image, norm_img, alpha=0, beta=20, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    """ Get some measureness of the "yellowness" of an image.
+    :param image: Input image to get "yellowness" of, should be in grayscale.
+    """
 
-    #hist = cv2.calcHist([norm_img], [0], None, [2], [0,20])
-    #back_project = cv2.calcBackProject([norm_img], [0], hist, [0,20], 1)
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    #filtered_img = cv2.applyColorMap(norm_img, cv2.COLORMAP_RAINBOW)
+    lower_yellow = np.array([33,50,50])
+    upper_yellow = np.array([37,255,255])
+    mask = cv2.inRange(hsv_img, lower_yellow, upper_yellow)
+
+    test_img = hsv_img.copy()
+    test_img[np.where(mask==0)] = 0
+
+    analysis_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
+    gray_analysis_img = cv2.cvtColor(analysis_img, cv2.COLOR_BGR2GRAY)
+    num_yellow = cv2.countNonZero(gray_analysis_img)
+    height, width, channels = image.shape
+    total_size = height * width
+    yellowness = num_yellow / total_size
 
     #DEBUG: display image
-    cv2.imshow('filtered image', norm_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('original image', image)
+    #print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
+    #cv2.imshow('hsv image', hsv_img)
+    #cv2.imshow('new image', test_img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
-    return 0
+    return yellowness
 
 def extractCircles(image):
+    """ Get circles detected in an image. Uses Hough Transform.
+    :param image: Input image to get circles from, should be in grayscale and blurred.
+    """
     circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=350, maxRadius=500)
     circles = np.uint16(np.around(circles))
 
@@ -36,4 +54,7 @@ def extractCircles(image):
     #cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
-    return circles
+    if len(circles) > 0:
+        return 1
+    else:
+        return 0
