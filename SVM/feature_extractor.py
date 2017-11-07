@@ -58,3 +58,13 @@ def extractCircles(image):
         return 1
     else:
         return 0
+
+def main(image_set, labels):
+    file = open("data.txt", 'w')
+    features = []
+    for i in range(len(image_set)):
+        features.append(extractCircles(image_set[i]))
+        features.append(extractYellowness(image_set[i]))
+        file.write(labels[i] + "," + features[0] + "," + features[1] + "\n")        
+        features.clear
+        
