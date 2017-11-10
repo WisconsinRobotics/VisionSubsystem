@@ -7,9 +7,9 @@ Created on Tue Oct 31 19:19:33 2017
 import cv2
 import numpy as np
 from sklearn import svm
-
+import matplotlib.pyplot as plt
 import feature_extractor
-
+'''
 #clf = svm.SVC(gamma=0.001, C=100.)
 
 img = cv2.imread("tennis_ball.jpg")
@@ -33,8 +33,18 @@ features.append(feature_extractor.extractYellowness(img))
 features.append(feature_extractor.extractCircles(blur_gray_img))
 
 #DEBUG
-print(str(height) + "x" + str(width))
 
 #cv2.imshow('blurred gray image', blur_gray_img)
 #cv2.waitKey(0)
 #cv2.destroyAllWindows()
+'''
+
+img = cv2.imread('tennis_ball.jpg')
+gray= cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+#sift = cv2.xfeatures2d.SIFT_create()
+#kp, desc = sift.detectAndCompute(gray, None)
+#plt.imshow(cv2.drawKeypoints(gray, kp, img.copy()))
+cv2.imshow('gray', img)
+cv2.waitKey(0)
+
+
