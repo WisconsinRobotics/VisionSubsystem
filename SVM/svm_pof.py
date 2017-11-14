@@ -32,9 +32,11 @@ features = []
 features.append(feature_extractor.extractYellowness(img))
 features.append(feature_extractor.extractCircles(blur_gray_img))
 
-#DEBUG
+features.clear
+
+#DEBUG    #---------------------------------------------------------------------------
 print(str(height) + "x" + str(width))
 
 #cv2.imshow('blurred gray image', blur_gray_img)
 #cv2.waitKey(0)
-#cv2.destroyAllWindows()
+#cv2.destroyAllWindows()    #---------------------------------------------------------------------------
