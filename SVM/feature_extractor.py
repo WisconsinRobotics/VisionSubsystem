@@ -8,6 +8,7 @@ Created on Thu Nov  2 19:43:35 2017
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+import math
 
 def extractYellowness(image):
     """
@@ -67,11 +68,11 @@ def extractCircles(image):
     test_img = image.copy()
     test_edge_img = edges.copy()
     edges_debug = edges.copy()
-    plt.subplot(121), plt.imshow(image, cmap = "gray")
-    plt.title("Original Image")#, plt.xticks([]), plt.yticks([])
-    plt.subplot(122), plt.imshow(edges, cmap = "gray")
-    plt.title("Edge Image")#, plt.xticks([]), plt.yticks([])
-    plt.show()    #---------------------------------------------------------------------------
+    #plt.subplot(121), plt.imshow(image, cmap = "gray")
+    #plt.title("Original Image")#, plt.xticks([]), plt.yticks([])
+    #plt.subplot(122), plt.imshow(edges, cmap = "gray")
+    #plt.title("Edge Image")#, plt.xticks([]), plt.yticks([])
+    #plt.show()    #---------------------------------------------------------------------------
 
     # get circles using Hough Transform
     circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=360, maxRadius=450)
@@ -81,16 +82,16 @@ def extractCircles(image):
     circles = np.uint16(np.around(circles))
 
     #DEBUG: draw circles    #---------------------------------------------------------------------------
-    for i in circles[0,:]:
-        cv2.circle(image, (i[0], i[1]), i[2], (0, 0, 0), 2)
-        cv2.circle(image, (i[0], i[1]), 2, (0, 0, 0), 3)
-        cv2.circle(edges, (i[0], i[1]), i[2], (255, 255, 255), 2)
-        cv2.circle(edges, (i[0], i[1]), 2, (255, 255, 255), 3)
-    cv2.imshow("detected circles", image)
-    cv2.waitKey(0)
-    cv2.imshow("detected circles with edge image", edges)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()    #---------------------------------------------------------------------------
+    #for i in circles[0,:]:
+    #    cv2.circle(image, (i[0], i[1]), i[2], (0, 0, 0), 2)
+    #    cv2.circle(image, (i[0], i[1]), 2, (0, 0, 0), 3)
+    #    cv2.circle(edges, (i[0], i[1]), i[2], (255, 255, 255), 2)
+    #    cv2.circle(edges, (i[0], i[1]), 2, (255, 255, 255), 3)
+    #cv2.imshow("detected circles", image)
+    #cv2.waitKey(0)
+    #cv2.imshow("detected circles with edge image", edges)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()    #---------------------------------------------------------------------------
 
     # average all detected circles w/in a range
     x_tot = 0
@@ -108,15 +109,15 @@ def extractCircles(image):
     #---------------------------------------------------------------------------
     print("x_tot: ", x_tot, " y_tot: ", y_tot, " r_tot: ", r_tot)
     print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
-    cv2.circle(test_img, (x_avg, y_avg), r_avg, (0, 0, 0), 2)
-    cv2.circle(test_img, (x_avg, y_avg), 2, (0, 0, 0), 3)
-    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
-    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
-    cv2.imshow("averaged circle", test_img)
-    cv2.waitKey(0)
-    cv2.imshow("averaged circle with edge image", test_edge_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.circle(test_img, (x_avg, y_avg), r_avg, (0, 0, 0), 2)
+    #cv2.circle(test_img, (x_avg, y_avg), 2, (0, 0, 0), 3)
+    #cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
+    #cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
+    #cv2.imshow("averaged circle", test_img)
+    #cv2.waitKey(0)
+    #cv2.imshow("averaged circle with edge image", test_edge_img)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
@@ -125,33 +126,51 @@ def extractCircles(image):
     offsets = []
 
     search_range = 15
-    found_val = False
     for theta in range(0, 360):
-        ang = math.radians(theta)
-        m = math.tan(ang)
-        b = y_avg - (m * x_avg)
-        for x in range(-search_range, search_range + 1):
-            x_r = r_avg * math.cos(ang)
-            x_test = x_r + x
-            y_test = (m * x_test) + b
-            if (edges_debug[x_test, y_test] == [255, 255, 255]):
-                edge_length = math.sqrt(math.pow(x_test, 2) + math.pow(y_test, 2))
-                offsets.append(r_avg - edge_length)
-                found_val = True
-                break
-        if (found_val):
-            found_val = False
+        #DEBUG
+        print("current theta: ", theta)
+        if (theta != 90) and (theta != 270):
+            ang = math.radians(theta)
+            m = math.tan(ang)
+            b = y_avg - (m * x_avg)
+            #DEBUG
+            print("ang: ", ang, " m: ", m, " b: ", b)
+            for r in range(-search_range, search_range + 1):
+                r_test = r_avg + r
+                x_r = r_test * math.cos(ang)
+                x_test = x_r + x_avg
+                x_test_coord = math.floor(x_test)
+                y_test = (m * x_test) + b
+                y_test_coord = math.floor(y_test)
+                #DEBUG
+                print("r: ", r, " r_test: ", r_test, " x_test_coord: ", x_test_coord, " y_test_coord: ", y_test_coord)
+                if (edges_debug[x_test_coord, y_test_coord] == [255, 255, 255]):
+                    offsets.append(math.fabs(r_avg - r_test))
+                    break
         else:
-            offsets.append(0)
+            print("entered exception case")
+            for r in range(-search_range, search_range + 1):
+                r_test = r_avg + r
+                if (theta == 90):
+                    y_test_coord = math.floor(y_avg + r_test)
+                else:
+                    y_test_coord = math.floor(y_avg - r_test)
+                print("r: ", r, " r_test: ", r_test, " y_test_coord: ", y_test_coord)
+                if (edges_debug[x_avg, y_test_coord] == [255, 255, 255]):
+                    offsets.append(math.fabs(r_avg - r_test))
+                    break
 
     offsets_tot = 0
+    max_offset = max(offsets)
     for x in offsets[0,:]:
-        offsets_tot += x
+        offsets_tot += math.fabs(x - max_offset)
     offsets_avg = offsets_tot / (len(offsets) + 1)
     goodness = offsets_avg / normalization_factor
 
     #DEBUG: check goodness and relevant values
     #---------------------------------------------------------------------------
+    print("max offset: ", max_offset, " offsets_tot: ", offsets_tot, " offsets_avg: ", offsets_avg)
+    print("goodness: ", goodness)
     #---------------------------------------------------------------------------
 
     return goodness
