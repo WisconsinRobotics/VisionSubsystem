@@ -111,13 +111,13 @@ def extractCircles(image):
     print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
     #cv2.circle(test_img, (x_avg, y_avg), r_avg, (0, 0, 0), 2)
     #cv2.circle(test_img, (x_avg, y_avg), 2, (0, 0, 0), 3)
-    #cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
-    #cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
+    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
+    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
     #cv2.imshow("averaged circle", test_img)
     #cv2.waitKey(0)
-    #cv2.imshow("averaged circle with edge image", test_edge_img)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.imshow("averaged circle with edge image", test_edge_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
@@ -125,8 +125,8 @@ def extractCircles(image):
     normalization_factor = 1000
     offsets = []
 
-    search_range = 15
-    for theta in range(0, 360):
+    search_range = 10
+    for theta in range(0, 5):
         #DEBUG
         print("current theta: ", theta)
         if (theta != 90) and (theta != 270):
@@ -144,7 +144,11 @@ def extractCircles(image):
                 y_test_coord = math.floor(y_test)
                 #DEBUG
                 print("r: ", r, " r_test: ", r_test, " x_test_coord: ", x_test_coord, " y_test_coord: ", y_test_coord)
-                if (edges_debug[x_test_coord, y_test_coord] == [255, 255, 255]):
+                print("DEBUG: ", edges_debug[x_test_coord, y_test_coord])
+                cv2.circle(test_edge_img, (x_test_coord, y_test_coord), 1, (255, 255, 255), 3)
+                cv2.imshow("drawing points...", test_edge_img)
+                cv2.waitKey(1)
+                if (edges_debug[x_test_coord, y_test_coord] == 1):
                     offsets.append(math.fabs(r_avg - r_test))
                     break
         else:
@@ -156,7 +160,7 @@ def extractCircles(image):
                 else:
                     y_test_coord = math.floor(y_avg - r_test)
                 print("r: ", r, " r_test: ", r_test, " y_test_coord: ", y_test_coord)
-                if (edges_debug[x_avg, y_test_coord] == [255, 255, 255]):
+                if (edges_debug[x_avg, y_test_coord] == 1):
                     offsets.append(math.fabs(r_avg - r_test))
                     break
 
