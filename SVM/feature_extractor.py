@@ -10,6 +10,110 @@ import numpy as np
 from matplotlib import pyplot as plt
 import math
 
+edge_coords = []
+
+# Helper functions here:
+#-------------------------------------------------------------------------------
+def getEdgeCoords(edge_img, x_coord, y_coord, r_avg, thresh, step_type, path_length, is_start):
+    """
+    Step types follow compass directions:
+      - 0 = N
+      - 1 = NE
+      - 2 = E
+      - 3 = SE
+      - 4 = S
+      - 5 = SW
+      - 6 = W
+      - 7 = NW
+
+    :param edge_img: Input image, must be edge image
+    :param r_avg: Radius of the averaged circle, for determining valid pts
+    :param step_type: Which direction this step is, see above
+    :param is_start: Determine if we need to do first steps or not
+    """
+
+    if (is_start):
+        getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord + 1, y_coord + 1, r_avg, thresh, 1, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord + 1, y_coord - 1, r_avg, thresh, 3, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord - 1, y_coord - 1, r_avg, thresh, 5, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+        getEdgeCoords(edge_img, x_coord - 1, y_coord + 1, r_avg, thresh, 7, path_length + 1, 0)
+
+        return 1
+    else:
+        h = len(edge_img)
+        w = len(edge_img[0])
+        if ((x_coord < 0) or (x_coord > (w - 1)) or (y_coord < 0) or (y_coord > (h - 1))):
+            return 0
+        elif (edge_img[x_coord, y_coord] == 1):
+            if ((path_length > (r_avg - thresh)) or (path_length < (r_avg + thresh))):
+                edge_coords.append([x_coord, y_coord])
+                return 1
+            else:
+                if (step_type == 0):
+                    return getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+                elif (step_type == 1):
+                    getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord + 1, y_coord + 1, r_avg, thresh, 1, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+                    return 1
+                elif (step_type == 2):
+                    return getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+                elif (step_type == 3):
+                    getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord + 1, y_coord - 1, r_avg, thresh, 3, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+                    return 1
+                elif (step_type == 4):
+                    return getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+                elif (step_type == 5):
+                    getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord - 1, y_coord - 1, r_avg, thresh, 5, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+                    return 1
+                elif (step_type == 6):
+                    return getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+                else:
+                    getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord + 1, y_coord + 1, r_avg, thresh, 8, path_length + 1, 0)
+                    getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+                    return 1
+        else:
+            if (step_type == 0):
+                return getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+            elif (step_type == 1):
+                getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord + 1, y_coord + 1, r_avg, thresh, 1, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+                return 1
+            elif (step_type == 2):
+                return getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+            elif (step_type == 3):
+                getEdgeCoords(edge_img, x_coord + 1, y_coord, r_avg, thresh, 2, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord + 1, y_coord - 1, r_avg, thresh, 3, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+                return 1
+            elif (step_type == 4):
+                return getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+            elif (step_type == 5):
+                getEdgeCoords(edge_img, x_coord, y_coord - 1, r_avg, thresh, 4, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord - 1, y_coord - 1, r_avg, thresh, 5, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+                return 1
+            elif (step_type == 6):
+                return getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+            else:
+                getEdgeCoords(edge_img, x_coord - 1, y_coord, r_avg, thresh, 6, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord + 1, y_coord + 1, r_avg, thresh, 8, path_length + 1, 0)
+                getEdgeCoords(edge_img, x_coord, y_coord + 1, r_avg, thresh, 0, path_length + 1, 0)
+                return 1
+
+# Feature extractors here:
+#-------------------------------------------------------------------------------
+
 def extractYellowness(image):
     """
     Get some measureness of the "yellowness" of an image.
@@ -121,48 +225,59 @@ def extractCircles(image):
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
-    goodness = 0
     normalization_factor = 1000
     offsets = []
 
     search_range = 10
-    for theta in range(0, 5):
-        #DEBUG
-        print("current theta: ", theta)
-        if (theta != 90) and (theta != 270):
-            ang = math.radians(theta)
-            m = math.tan(ang)
-            b = y_avg - (m * x_avg)
-            #DEBUG
-            print("ang: ", ang, " m: ", m, " b: ", b)
-            for r in range(-search_range, search_range + 1):
-                r_test = r_avg + r
-                x_r = r_test * math.cos(ang)
-                x_test = x_r + x_avg
-                x_test_coord = math.floor(x_test)
-                y_test = (m * x_test) + b
-                y_test_coord = math.floor(y_test)
-                #DEBUG
-                print("r: ", r, " r_test: ", r_test, " x_test_coord: ", x_test_coord, " y_test_coord: ", y_test_coord)
-                print("DEBUG: ", edges_debug[x_test_coord, y_test_coord])
-                cv2.circle(test_edge_img, (x_test_coord, y_test_coord), 1, (255, 255, 255), 3)
-                cv2.imshow("drawing points...", test_edge_img)
-                cv2.waitKey(1)
-                if (edges_debug[x_test_coord, y_test_coord] == 1):
-                    offsets.append(math.fabs(r_avg - r_test))
-                    break
-        else:
-            print("entered exception case")
-            for r in range(-search_range, search_range + 1):
-                r_test = r_avg + r
-                if (theta == 90):
-                    y_test_coord = math.floor(y_avg + r_test)
-                else:
-                    y_test_coord = math.floor(y_avg - r_test)
-                print("r: ", r, " r_test: ", r_test, " y_test_coord: ", y_test_coord)
-                if (edges_debug[x_avg, y_test_coord] == 1):
-                    offsets.append(math.fabs(r_avg - r_test))
-                    break
+    edges_h = len(edges)
+    edges_w = len(edges[0])
+    y_start = math.floor(edges_h / 2)
+    x_start = math.floor(edges_w / 2)
+    getEdgeCoords(edges_debug, x_start, y_start, r_avg, search_range, 0, 0, 1)
+
+    #DEBUG: show detected coordinates
+    #---------------------------------------------------------------------------
+    for i in edge_coords[0,:]:
+        print("detected edge x-coordinate: ", edge_coord[i][0], " y-coordinate: ", edge_coord[i][1])
+    #---------------------------------------------------------------------------
+
+#    for theta in range(0, 5):
+#        #DEBUG
+#        print("current theta: ", theta)
+#        if (theta != 90) and (theta != 270):
+#            ang = math.radians(theta)
+#            m = math.tan(ang)
+#            b = y_avg - (m * x_avg)
+#            #DEBUG
+#            print("ang: ", ang, " m: ", m, " b: ", b)
+#            for r in range(-search_range, search_range + 1):
+#                r_test = r_avg + r
+#                x_r = r_test * math.cos(ang)
+#                x_test = x_r + x_avg
+#                x_test_coord = math.floor(x_test)
+#                y_test = (m * x_test) + b
+#                y_test_coord = math.floor(y_test)
+#                #DEBUG
+#                print("r: ", r, " r_test: ", r_test, " x_test_coord: ", x_test_coord, " y_test_coord: ", y_test_coord)
+#                print("DEBUG: ", edges_debug[x_test_coord, y_test_coord])
+#                cv2.circle(test_edge_img, (x_test_coord, y_test_coord), 1, (255, 255, 255), 3)
+#                cv2.imshow("drawing points...", test_edge_img)
+#                cv2.waitKey(1)
+#                if (edges_debug[x_test_coord, y_test_coord] == 1):
+#                    offsets.append(math.fabs(r_avg - r_test))
+#                    break
+#        else:
+#            print("entered exception case")
+#            for r in range(-search_range, search_range + 1):
+#                r_test = r_avg + r
+#                if (theta == 90):
+#                    y_test_coord = math.floor(y_avg + r_test)
+#                else:
+#                    y_test_coord = math.floor(y_avg - r_test)
+#                print("r: ", r, " r_test: ", r_test, " y_test_coord: ", y_test_coord)
+#                if (edges_debug[x_avg, y_test_coord] == 1):
+#                    offsets.append(math.fabs(r_avg - r_test))
+#                    break
 
     offsets_tot = 0
     max_offset = max(offsets)
