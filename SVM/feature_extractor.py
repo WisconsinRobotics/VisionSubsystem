@@ -32,93 +32,78 @@ def getEdgeCoords(edge_img, x_start, y_start, r_avg, thresh):
     :param is_start: Determine if we need to do first steps or not
     """
 
-    print("at beginning of getEdgeCoords")
-
     d = deque()
     edge_pts = []
     h = len(edge_img)
     w = len(edge_img[0])
 
-    d.appendleft([x_start, y_start + 1, 0, 1])
-    d.appendleft([x_start + 1, y_start + 1, 1, 1])
-    d.appendleft([x_start + 1, y_start, 2, 1])
-    d.appendleft([x_start + 1, y_start - 1, 3, 1])
-    d.appendleft([x_start, y_start - 1, 4, 1])
-    d.appendleft([x_start - 1, y_start - 1, 5, 1])
-    d.appendleft([x_start - 1, y_start, 6, 1])
-    d.appendleft([x_start - 1, y_start + 1, 7, 1])
-    print(d)
+    d.appendleft([x_start, y_start + 1, 0])
+    d.appendleft([x_start + 1, y_start + 1, 1])
+    d.appendleft([x_start + 1, y_start, 2])
+    d.appendleft([x_start + 1, y_start - 1, 3])
+    d.appendleft([x_start, y_start - 1, 4])
+    d.appendleft([x_start - 1, y_start - 1, 5])
+    d.appendleft([x_start - 1, y_start, 6])
+    d.appendleft([x_start - 1, y_start + 1, 7])
 
     while (d):
         info = d.pop()
-        if (edge_img[info[0], info[1]] == 1):
-            print("found")
-            sys.exit()
         if ((info[0] < 0) or (info[0] > (w - 1)) or (info[1] < 0) or (info[1] > (h - 1))):
             continue
-        elif (edge_img[info[0], info[1]] == 1):
-            print("found point")
-            if ((info[3] > (r_avg - thresh)) or (info[3] < (r_avg + thresh))):
-                print("adding point")
+        elif (edge_img[info[0], info[1]] == 255):
+            length = math.hypot(x_start - info[0], y_start - info[1])
+            if ((length > (r_avg - thresh)) and (length < (r_avg + thresh))):
                 edge_pts.append([info[0], info[1]])
             else:
                 if (info[2] == 0):
-                    print("at 0 case")
-                    d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
+                    d.appendleft([info[0], info[1] + 1, 0])
                 elif (info[2] == 1):
-                    print("at 1 case")
-                    d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
-                    d.appendleft([info[0] + 1, info[1] + 1, 1, info[3] + 1])
-                    d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
+                    d.appendleft([info[0], info[1] + 1, 0])
+                    d.appendleft([info[0] + 1, info[1] + 1, 1])
+                    d.appendleft([info[0] + 1, info[1], 2])
                 elif (info[2] == 2):
-                    print("at 2 case")
-                    d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
+                    d.appendleft([info[0] + 1, info[1], 2])
                 elif (info[2] == 3):
-                    print("at 3 case")
-                    d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
-                    d.appendleft([info[0] + 1, info[1] - 1, 3, info[3] + 1])
-                    d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
+                    d.appendleft([info[0] + 1, info[1], 2])
+                    d.appendleft([info[0] + 1, info[1] - 1, 3])
+                    d.appendleft([info[0], info[1] - 1, 4])
                 elif (info[2] == 4):
-                    print("at 4 case")
-                    d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
+                    d.appendleft([info[0], info[1] - 1, 4])
                 elif (info[2] == 5):
-                    print("at 5 case")
-                    d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
-                    d.appendleft([info[0] - 1, info[1] - 1, 5, info[3] + 1])
-                    d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
+                    d.appendleft([info[0], info[1] - 1, 4])
+                    d.appendleft([info[0] - 1, info[1] - 1, 5])
+                    d.appendleft([info[0] - 1, info[1], 6])
                 elif (info[2] == 6):
-                    print("at 6 case")
-                    d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
+                    d.appendleft([info[0] - 1, info[1], 6])
                 else:
-                    print("at 7 case")
-                    d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
-                    d.appendleft([info[0] - 1, info[1] + 1, 7, info[3] + 1])
-                    d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
+                    d.appendleft([info[0] - 1, info[1], 6])
+                    d.appendleft([info[0] - 1, info[1] + 1, 7])
+                    d.appendleft([info[0], info[1] + 1, 0])
         else:
             if (info[2] == 0):
-                d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
+                d.appendleft([info[0], info[1] + 1, 0])
             elif (info[2] == 1):
-                d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
-                d.appendleft([info[0] + 1, info[1] + 1, 1, info[3] + 1])
-                d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
+                d.appendleft([info[0], info[1] + 1, 0])
+                d.appendleft([info[0] + 1, info[1] + 1, 1])
+                d.appendleft([info[0] + 1, info[1], 2])
             elif (info[2] == 2):
-                d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
+                d.appendleft([info[0] + 1, info[1], 2])
             elif (info[2] == 3):
-                d.appendleft([info[0] + 1, info[1], 2, info[3] + 1])
-                d.appendleft([info[0] + 1, info[1] - 1, 3, info[3] + 1])
-                d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
+                d.appendleft([info[0] + 1, info[1], 2])
+                d.appendleft([info[0] + 1, info[1] - 1, 3])
+                d.appendleft([info[0], info[1] - 1, 4])
             elif (info[2] == 4):
-                d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
+                d.appendleft([info[0], info[1] - 1, 4])
             elif (info[2] == 5):
-                d.appendleft([info[0], info[1] - 1, 4, info[3] + 1])
-                d.appendleft([info[0] - 1, info[1] - 1, 5, info[3] + 1])
-                d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
+                d.appendleft([info[0], info[1] - 1, 4])
+                d.appendleft([info[0] - 1, info[1] - 1, 5])
+                d.appendleft([info[0] - 1, info[1], 6])
             elif (info[2] == 6):
-                d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
+                d.appendleft([info[0] - 1, info[1], 6])
             else:
-                d.appendleft([info[0] - 1, info[1], 6, info[3] + 1])
-                d.appendleft([info[0] - 1, info[1] + 1, 7, info[3] + 1])
-                d.appendleft([info[0], info[1] + 1, 0, info[3] + 1])
+                d.appendleft([info[0] - 1, info[1], 6])
+                d.appendleft([info[0] - 1, info[1] + 1, 7])
+                d.appendleft([info[0], info[1] + 1, 0])
 
     return edge_pts
 
@@ -236,23 +221,29 @@ def extractCircles(image):
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
-    normalization_factor = 1000
+    normalization_factor = 100
     offsets = []
+    search_range = 25
 
-    search_range = 15
-    print("now calling getEdgeCoords")
     edge_coords = getEdgeCoords(edges_debug, x_avg, y_avg, r_avg, search_range)
-    print("finished calling getEdgeCoords")
 
     #DEBUG: show detected coordinates
     #---------------------------------------------------------------------------
-    for i in edge_coords:
-        print("detected edge x-coordinate: ", edge_coord[i][0], " y-coordinate: ", edge_coord[i][1])
+#    for i in edge_coords:
+#        print("detected edge x-coordinate: ", i[0], " y-coordinate: ", i[1])
+#        cv2.circle(test_edge_img, (i[1], i[0]), 20, (255, 255, 255), 1)
+#        cv2.imshow("detected edge pts", test_edge_img)
+#        cv2.waitKey(1)
+#    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
+
+    for x in edge_coords:
+        offset = math.fabs(r_avg - math.hypot(x_avg - x[0], y_avg - x[1]))
+        offsets.append(offset)
 
     offsets_tot = 0
     max_offset = max(offsets)
-    for x in offsets[0,:]:
+    for x in offsets:
         offsets_tot += math.fabs(x - max_offset)
     offsets_avg = offsets_tot / (len(offsets) + 1)
     goodness = offsets_avg / normalization_factor
