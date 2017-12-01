@@ -31,7 +31,6 @@ def getEdgeCoords(edge_img, x_start, y_start, r_avg, thresh):
     :param step_type: Which direction this step is, see above
     :param is_start: Determine if we need to do first steps or not
     """
-
     d = deque()
     edge_pts = []
     h = len(edge_img)
@@ -120,15 +119,17 @@ def extractYellowness(image):
 
     :param image: Input image to get "yellowness" of, should be in grayscale.
     """
-
     hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    # from very shallow experimentation, I have found that the Hue range of 33 - 37 gives a nice range of tennis-ball-y colors
+    # from very shallow experimentation, I have found that the Hue range of 33 - 37 gives a nice range of tennis ball-y colors
     lower_yellow = np.array([33,50,50])
     upper_yellow = np.array([37,255,255])
     mask = cv2.inRange(hsv_img, lower_yellow, upper_yellow)
 
+    #DEBUG: make test_img for displaying, REMOVE ALL REFERENCES LATER
+    #---------------------------------------------------------------------------
     test_img = hsv_img.copy()
+    #---------------------------------------------------------------------------
     test_img[np.where(mask==0)] = 0
 
     analysis_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
@@ -145,11 +146,12 @@ def extractYellowness(image):
     #cv2.imshow('hsv image', hsv_img)
     #cv2.imshow('new image', test_img)
     #cv2.waitKey(0)
-    #cv2.destroyAllWindows()    #---------------------------------------------------------------------------
+    #cv2.destroyAllWindows()
+    #---------------------------------------------------------------------------
 
     return yellowness
 
-def extractCircles(image):
+def extractBestEstimatedCircle(image):
     """
     Get "goodness" of circles detected in an image. Uses Hough Transform.
 
@@ -172,7 +174,8 @@ def extractCircles(image):
     #plt.title("Original Image")#, plt.xticks([]), plt.yticks([])
     #plt.subplot(122), plt.imshow(edges, cmap = "gray")
     #plt.title("Edge Image")#, plt.xticks([]), plt.yticks([])
-    #plt.show()    #---------------------------------------------------------------------------
+    #plt.show()
+    #---------------------------------------------------------------------------
 
     # get circles using Hough Transform
     circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=360, maxRadius=450)
@@ -191,7 +194,8 @@ def extractCircles(image):
     #cv2.waitKey(0)
     #cv2.imshow("detected circles with edge image", edges)
     #cv2.waitKey(0)
-    #cv2.destroyAllWindows()    #---------------------------------------------------------------------------
+    #cv2.destroyAllWindows()
+    #---------------------------------------------------------------------------
 
     # average all detected circles w/in a range
     x_tot = 0
@@ -256,15 +260,39 @@ def extractCircles(image):
 
     return goodness
 
-def extractSeam():
+def extractSeam(image, original_image):
     """
-    Get probability of seams on detected object. Must use some tennis ball detection function first.
-
-    Using gradient orientation on the remaining image to find seams seems like a potential way forward.
+    Get probability of seams on detected object. One way of doing this is to use the HSV version of the image. Then, it may be possible to select only a certain range of pixel values that correspond to tennis ball seams (this can be relative to the rest of the picture). After getting this range, the picture is converted such that only that range is displayed, and a final calculation is made grading the amount of those remaining pixels. An extension could be to convert the remainder image into an edge image and detect similar curves (as the edges of a seam would appear).
     """
+    hsv_img = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+    h, s, v = cv2.split(hsv_img)
+    equ_h = cv2.equalizeHist(h)
+    equ_s = cv2.equalizeHist(s)
+    equ_v = cv2.equalizeHist(v)
+    equ_hsv_img = cv2.merge((h, equ_s, equ_v))
 
+#    equ_img = cv2.equalizeHist(image)
+#    clahe = cv2.createCLAHE(clipLimit=20.0, tileGridSize=(8,8))
+#    cl = clahe.apply(hsv_img)
 
-def extractContrast():
+    #DEBUG: show contrasted images
+    #---------------------------------------------------------------------------
+    res = np.hstack((hsv_img, equ_hsv_img))
+    cv2.imshow("hsv images", res)
+#    cv2.imshow("hsv image", hsv_img)
+    cv2.waitKey(0)
+    cv2.imshow("after equalization image", test_img)
+    cv2.waitKey(0)
+#    res = np.hstack((image, equ_img))
+#    cv2.imshow("image comparison", res)
+#    cv2.waitKey(0)
+#    res = np.hstack((image, cl))
+#    cv2.imshow("clahe image comparison", res)
+#    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    #---------------------------------------------------------------------------
+
+def extractGreatestCircularContrast():
     """
     Get best fitting radial gradient difference orientations. For example, a tennis ball would have many vectors pointing away from its edge due to the contrast between its lighter colors and the surrounding darker colors.
 
@@ -272,7 +300,7 @@ def extractContrast():
     """
 
 
-def extractFuzzyness():
+def extractBestFuzzyObject():
     """
     Get "goodness" of fuzzyness on detected objects. Must use some tennis ball detection, or other object-isolating, function first.
 
@@ -284,7 +312,7 @@ def main(image_set, labels):
     file = open("data.txt", 'w')
     features = []
     for i in range(len(image_set)):
-        features.append(extractCircles(image_set[i]))
+        features.append(extractBestEstimatedCircle(image_set[i]))
         features.append(extractYellowness(image_set[i]))
         file.write(labels[i] + "," + features[0] + "," + features[1] + "\n")
         features.clear
