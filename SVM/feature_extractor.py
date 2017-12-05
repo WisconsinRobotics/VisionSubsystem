@@ -262,35 +262,56 @@ def extractBestEstimatedCircle(image):
 
 def extractSeam(image, original_image):
     """
-    Get probability of seams on detected object. One way of doing this is to use the HSV version of the image. Then, it may be possible to select only a certain range of pixel values that correspond to tennis ball seams (this can be relative to the rest of the picture). After getting this range, the picture is converted such that only that range is displayed, and a final calculation is made grading the amount of those remaining pixels. An extension could be to convert the remainder image into an edge image and detect similar curves (as the edges of a seam would appear).
+    Get probability of seams on detected object. One way of doing this is to use the HSV version of the image. Then, it may be possible to select only a certain range of pixel values that correspond to tennis ball seams (this can be relative to the rest of the picture). After getting this range, the picture is converted such that only that range is displayed, and a final calculation is made grading the amount of those remaining pixels. A necessary extension requires that the remainder image be converted into an edge image and similar curves detected (as the edges of a seam would appear).
     """
     hsv_img = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv_img)
     equ_h = cv2.equalizeHist(h)
     equ_s = cv2.equalizeHist(s)
     equ_v = cv2.equalizeHist(v)
-    equ_hsv_img = cv2.merge((h, equ_s, equ_v))
-
-#    equ_img = cv2.equalizeHist(image)
-#    clahe = cv2.createCLAHE(clipLimit=20.0, tileGridSize=(8,8))
-#    cl = clahe.apply(hsv_img)
+    equ_hsv_img = cv2.merge((h, s, equ_v))
 
     #DEBUG: show contrasted images
     #---------------------------------------------------------------------------
     res = np.hstack((hsv_img, equ_hsv_img))
     cv2.imshow("hsv images", res)
-#    cv2.imshow("hsv image", hsv_img)
     cv2.waitKey(0)
-    cv2.imshow("after equalization image", test_img)
-    cv2.waitKey(0)
-#    res = np.hstack((image, equ_img))
-#    cv2.imshow("image comparison", res)
-#    cv2.waitKey(0)
-#    res = np.hstack((image, cl))
-#    cv2.imshow("clahe image comparison", res)
-#    cv2.waitKey(0)
     cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
+
+    lower_seam_range = np.array([20,10,0])
+    upper_seam_range = np.array([100,100,255])
+    mask = cv2.inRange(equ_hsv_img, lower_seam_range, upper_seam_range)
+
+    #DEBUG: make test_img for displaying, REMOVE ALL REFERENCES LATER
+    #---------------------------------------------------------------------------
+    test_img = equ_hsv_img.copy()
+    #---------------------------------------------------------------------------
+
+    test_img[np.where(mask==0)] = 0
+
+    h_test, s_test, v_test = cv2.split(test_img)
+    ret, thresh = cv2.threshold(s_test, .001, 255, cv2.THRESH_BINARY)
+    dbg_img, contours, hrch = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    epsilon = 3
+
+    #DEBUG: display filtered images
+    #---------------------------------------------------------------------------
+    cv2.imshow("filtered image", test_img)
+    cv2.waitKey(0)
+    cv2.imshow("filtered image", thresh)
+    cv2.waitKey(0)
+    dbg_disp_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
+    for x in contours:
+        print("contour info: ", x)
+        approx = cv2.approxPolyDP(x, epsilon, True)
+        cv2.drawContours(dbg_disp_img, approx, -1, (0, 0, 255), 2)
+        cv2.imshow("contours on filtered image", dbg_disp_img)
+        cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    #---------------------------------------------------------------------------
+
+    return 0
 
 def extractGreatestCircularContrast():
     """
