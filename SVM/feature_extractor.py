@@ -279,8 +279,8 @@ def extractSeam(image, original_image):
     cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
-    lower_seam_range = np.array([20,10,0])
-    upper_seam_range = np.array([100,100,255])
+    lower_seam_range = np.array([0,10,0])
+    upper_seam_range = np.array([60,140,150])
     mask = cv2.inRange(equ_hsv_img, lower_seam_range, upper_seam_range)
 
     #DEBUG: make test_img for displaying, REMOVE ALL REFERENCES LATER
@@ -301,13 +301,14 @@ def extractSeam(image, original_image):
     cv2.waitKey(0)
     cv2.imshow("filtered image", thresh)
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
     dbg_disp_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
-    for x in contours:
-        print("contour info: ", x)
-        approx = cv2.approxPolyDP(x, epsilon, True)
-        cv2.drawContours(dbg_disp_img, approx, -1, (0, 0, 255), 2)
-        cv2.imshow("contours on filtered image", dbg_disp_img)
-        cv2.waitKey(0)
+#    for x in contours:
+#        print("contour info: ", x)
+#        approx = cv2.approxPolyDP(x, epsilon, True)
+#        cv2.drawContours(dbg_disp_img, approx, -1, (0, 0, 255), 2)
+#        cv2.imshow("contours on filtered image", dbg_disp_img)
+#        cv2.waitKey(0)
     cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 

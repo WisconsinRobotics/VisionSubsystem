@@ -32,7 +32,7 @@ features = []
 
 #features.append(feature_extractor.extractYellowness(img))
 #features.append(feature_extractor.extractBestEstimatedCircle(blur_gray_img))
-features.append(feature_extractor.extractSeam(gray_img, img))
+features.append(feature_extractor.extractSeam(blur_gray_img, img))
 
 features.clear
 
