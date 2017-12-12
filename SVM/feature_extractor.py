@@ -111,11 +111,10 @@ def getEdgeCoords(edge_img, x_start, y_start, r_avg, thresh):
 
 def extractYellowness(image):
     """
-    Get some measureness of the "yellowness" of an image.
+    Get some measurement of the "yellowness" of an image.
 
     Concepts and Ideas:
-    - better constraints on desired color
-    - search for best range for detecting color
+    - better constraints on desired color and/or search for best range for detecting color
 
     :param image: Input image to get "yellowness" of, should be in grayscale.
     """
@@ -141,12 +140,12 @@ def extractYellowness(image):
 
     #DEBUG: display image
     #---------------------------------------------------------------------------
-    #cv2.imshow('original image', image)
-    #print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
-    #cv2.imshow('hsv image', hsv_img)
-    #cv2.imshow('new image', test_img)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    cv2.imshow('original image', image)
+    print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
+    cv2.imshow('hsv image', hsv_img)
+    cv2.imshow('new image', test_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     return yellowness
@@ -157,9 +156,7 @@ def extractBestEstimatedCircle(image):
 
     We define the "goodness" of a circle object in an image to be a measure of how close an averaged circle matches its corresponding object. This averaged circle is simply the circle calculated from the average of all detected centers and radii. A select number of points (we have chosen 1000) are taken on the circle and the distance between those points and nearest edge point of the object (radially) is calculated and normalized. This normalized value is our "goodness" value and is returned.
 
-    Some examples of good and bad "goodness" values include:
-
-    TODO: give examples here
+    TODO: find regions where there is a high concentration of circle centers and select the highest concentration region
 
     :param image: Input image to get circles from, should be in grayscale and blurred.
     """
