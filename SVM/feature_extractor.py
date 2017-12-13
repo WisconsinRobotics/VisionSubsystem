@@ -120,6 +120,7 @@ def extractYellowness(image):
     """
     hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
+    # setup mask for image
     # from very shallow experimentation, I have found that the Hue range of 33 - 37 gives a nice range of tennis ball-y colors
     lower_yellow = np.array([33,50,50])
     upper_yellow = np.array([37,255,255])
@@ -154,9 +155,14 @@ def extractBestEstimatedCircle(image):
     """
     Get "goodness" of circles detected in an image. Uses Hough Transform.
 
-    We define the "goodness" of a circle object in an image to be a measure of how close an averaged circle matches its corresponding object. This averaged circle is simply the circle calculated from the average of all detected centers and radii. A select number of points (we have chosen 1000) are taken on the circle and the distance between those points and nearest edge point of the object (radially) is calculated and normalized. This normalized value is our "goodness" value and is returned.
+    We define the "goodness" of a circle object in an image to be a measure of how close an averaged circle 
+    matches its corresponding object. This averaged circle is simply the circle calculated from the 
+    average of all detected centers and radii. A select number of points (we have chosen 1000) are taken 
+    on the circle and the distance between those points and nearest edge point of the object (radially) 
+    is calculated and normalized. This normalized value is our "goodness" value and is returned.
 
-    TODO: find regions where there is a high concentration of circle centers and select the highest concentration region
+    TODO: find regions where there is a high concentration of circle centers and select the highest 
+    concentration region
 
     :param image: Input image to get circles from, should be in grayscale and blurred.
     """
@@ -257,59 +263,99 @@ def extractBestEstimatedCircle(image):
 
     return goodness
 
-def extractSeam(image, original_image):
+def extractSeam(image):
     """
-    Get probability of seams on detected object. One way of doing this is to use the HSV version of the image. Then, it may be possible to select only a certain range of pixel values that correspond to tennis ball seams (this can be relative to the rest of the picture). After getting this range, the picture is converted such that only that range is displayed, and a final calculation is made grading the amount of those remaining pixels. A necessary extension requires that the remainder image be converted into an edge image and similar curves detected (as the edges of a seam would appear).
+    Get probability of seams on detected object. One way of doing this is to use the HSV version of the image. 
+    Then, it may be possible to select only a certain range of pixel values that correspond to tennis ball seams 
+    (this can be relative to the rest of the picture). After getting this range, the picture is converted such 
+    that only that range is displayed, and a final calculation is made grading the amount of those remaining 
+    pixels. A necessary extension requires that the remainder image be converted into an edge image and similar 
+    curves detected (as the edges of a seam would appear).
     """
-    hsv_img = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv_img)
-    equ_h = cv2.equalizeHist(h)
-    equ_s = cv2.equalizeHist(s)
     equ_v = cv2.equalizeHist(v)
     equ_hsv_img = cv2.merge((h, s, equ_v))
 
-    #DEBUG: show contrasted images
-    #---------------------------------------------------------------------------
-    res = np.hstack((hsv_img, equ_hsv_img))
-    cv2.imshow("hsv images", res)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    #---------------------------------------------------------------------------
-
+    # setup mask for image
     lower_seam_range = np.array([0,10,0])
-    upper_seam_range = np.array([60,140,150])
+    upper_seam_range = np.array([60,160,150])
     mask = cv2.inRange(equ_hsv_img, lower_seam_range, upper_seam_range)
 
-    #DEBUG: make test_img for displaying, REMOVE ALL REFERENCES LATER
-    #---------------------------------------------------------------------------
-    test_img = equ_hsv_img.copy()
-    #---------------------------------------------------------------------------
+    equ_hsv_img[np.where(mask==0)] = 0
 
-    test_img[np.where(mask==0)] = 0
+    equ_h_val, equ_s_val, equ_v_val = cv2.split(equ_hsv_img)
+    ret, bin_img = cv2.threshold(equ_s_val, .001, 255, cv2.THRESH_BINARY)
+    cnt_img, contours, hrch = cv2.findContours(bin_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # the contour length threshold is a relatively arbitrary value based on what behavior I've noticed in test image contours
+    max_cnt_len = len(max(contours, key=len))
+    min_cnt_len = len(min(contours, key=len))
+    cnt_thresh = (min_cnt_len + (.05 * max_cnt_len)) / 2
 
-    h_test, s_test, v_test = cv2.split(test_img)
-    ret, thresh = cv2.threshold(s_test, .001, 255, cv2.THRESH_BINARY)
-    dbg_img, contours, hrch = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    epsilon = 3
+    rows, cols = bin_img.shape[:2]
+    candidates = []
+    line_params = []
+    for x in contours:
+        epsilon = .001 * cv2.arcLength(x, True)
+        approx = cv2.approxPolyDP(x, epsilon, True)
+        if len(x) > cnt_thresh:
+            [vx, vy, x_int, y_int] = cv2.fitLine(x, cv2.DIST_L2, 0, .01, .01)
+            #DEBUG: draw approximated contours and best fit lines
+            #---------------------------------------------------------------------------
+#            print("epsilon: ", epsilon)
+#            print("approx info: ", approx, " length: ", len(approx))
+#            cv2.drawContours(image, [approx], 0, (0, 0, 255), 2)
+#            cv2.imshow("contours on image", image)
+#            cv2.waitKey(0)
+            
+#            left_val = int((-x_int * vy / vx) + y_int)
+#            right_val = int(((cols - x_int) * vy / vx) + y_int)
+#            cv2.line(image, (cols - 1, right_val), (0, left_val), (0, 255, 0), 2)
+#            cv2.imshow("contours on image", image)
+#            cv2.waitKey(0)
+            #---------------------------------------------------------------------------
+            candidates.append(approx)
+            line_params.append([vx, vy])
+    #cv2.destroyAllWindows()
+    
+    shape_matches = []
+    for idx, x in enumerate(candidates):
+        if (idx + 1) <= len(candidates):
+            for y in candidates[idx+1:]:
+                match_val = cv2.matchShapes(x, y, 1, 0)
+                shape_matches.append(match_val)
+    
+    angle_diffs = []
+    right_ang = math.pi / 2
+    for idx, x in enumerate(line_params):
+        if (idx + 1) <= len(line_params):
+            for y in candidates[idx+1:]:
+                m1 = x[1] / x[0]
+                angle1 = math.atan(m1)
+                m2 = y[1] / y[0]
+                print(x)
+                angle2 = math.atan(m2)
+                diff = math.fabs(angle1 - angle2)
+                angle_diffs.append(diff)
 
-    #DEBUG: display filtered images
-    #---------------------------------------------------------------------------
-    cv2.imshow("filtered image", test_img)
-    cv2.waitKey(0)
-    cv2.imshow("filtered image", thresh)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    dbg_disp_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
-#    for x in contours:
-#        print("contour info: ", x)
-#        approx = cv2.approxPolyDP(x, epsilon, True)
-#        cv2.drawContours(dbg_disp_img, approx, -1, (0, 0, 255), 2)
-#        cv2.imshow("contours on filtered image", dbg_disp_img)
-#        cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    #---------------------------------------------------------------------------
-
-    return 0
+    seam_prob = 0
+    # this contributing value determines the "likeness" of the detected, approximated contours, 
+    # selecting the one with the highest value (least similar pair)
+    matched_shape_val = max(shape_matches)
+    # this contributing value determines the closest-to-right angle between any given angle pair
+    bfl_val = math.inf
+    for x in angle_diffs:
+        ang_closeness = math.fabs(x - right_ang)
+        if ang_closeness < bfl_val:
+            bfl_val = ang_closeness
+            
+    # again, a relatively arbitrary estimate of what this probability would look like given these 
+    # contributing values, the normalization factor can (and probably should) be adjusted; note that 
+    # bfl_val has significantly more weight than matched_shape_val
+    normalization_factor = 10
+    seam_prob = (.8 * (bfl_val / normalization_factor)) + (.2 * (matched_shape_val / normalization_factor))
+    
+    return seam_prob
 
 def extractGreatestCircularContrast():
     """
