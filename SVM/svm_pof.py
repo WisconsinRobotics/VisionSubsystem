@@ -30,15 +30,17 @@ height, width = d_img.shape[:2]
 # - @2: seam probability
 features = []
 
-#features.append(feature_extractor.extractYellowness(img))
-#features.append(feature_extractor.extractBestEstimatedCircle(blur_gray_img))
+features.append(feature_extractor.extractYellowness(img))
+features.append(feature_extractor.extractBestEstimatedCircle(blur_gray_img))
 features.append(feature_extractor.extractSeam(img))
 
+#DEBUG
+#---------------------------------------------------------------------------
+print(str(height) + "x" + str(width))
+print("features: ")
+print("    yellowness: ", features[0])
+print("    circularity: ", features[1])
+print("    seam prob: ", features[2])
+#---------------------------------------------------------------------------
+
 features.clear
-
-#DEBUG    #---------------------------------------------------------------------------
-#print(str(height) + "x" + str(width))
-
-#cv2.imshow('blurred gray image', blur_gray_img)
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()    #---------------------------------------------------------------------------

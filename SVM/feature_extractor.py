@@ -113,26 +113,23 @@ def extractYellowness(image):
     """
     Get some measurement of the "yellowness" of an image.
 
-    Concepts and Ideas:
-    - better constraints on desired color and/or search for best range for detecting color
+    NOTE: a potential big improvement would be to find regions where there is a high concentration of 
+    filtered yellow pixels before using some bounding area around that region as the analyzed "image"
 
     :param image: Input image to get "yellowness" of, should be in grayscale.
     """
     hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # setup mask for image
-    # from very shallow experimentation, I have found that the Hue range of 33 - 37 gives a nice range of tennis ball-y colors
+    # NOTE: from very shallow experimentation, I have found that the Hue range of 33 - 37 gives 
+    # a nice range of tennis ball-y colors
     lower_yellow = np.array([33,50,50])
     upper_yellow = np.array([37,255,255])
     mask = cv2.inRange(hsv_img, lower_yellow, upper_yellow)
+    
+    hsv_img[np.where(mask==0)] = 0
 
-    #DEBUG: make test_img for displaying, REMOVE ALL REFERENCES LATER
-    #---------------------------------------------------------------------------
-    test_img = hsv_img.copy()
-    #---------------------------------------------------------------------------
-    test_img[np.where(mask==0)] = 0
-
-    analysis_img = cv2.cvtColor(test_img, cv2.COLOR_HSV2BGR)
+    analysis_img = cv2.cvtColor(hsv_img, cv2.COLOR_HSV2BGR)
     gray_analysis_img = cv2.cvtColor(analysis_img, cv2.COLOR_BGR2GRAY)
     num_yellow = cv2.countNonZero(gray_analysis_img)
     height, width, channels = image.shape
@@ -141,12 +138,10 @@ def extractYellowness(image):
 
     #DEBUG: display image
     #---------------------------------------------------------------------------
-    cv2.imshow('original image', image)
-    print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
-    cv2.imshow('hsv image', hsv_img)
-    cv2.imshow('new image', test_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+#    print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
+#    cv2.imshow('analysis image', hsv_img)
+#    cv2.waitKey(0)
+#    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     return yellowness
@@ -161,43 +156,30 @@ def extractBestEstimatedCircle(image):
     on the circle and the distance between those points and nearest edge point of the object (radially) 
     is calculated and normalized. This normalized value is our "goodness" value and is returned.
 
-    TODO: find regions where there is a high concentration of circle centers and select the highest 
-    concentration region
+    NOTE: a potential big improvement would be to find regions where there is a high concentration of 
+    circle centers and select the highest concentration region
 
     :param image: Input image to get circles from, should be in grayscale and blurred.
     """
     # get edge image of input
-    edges = cv2.Canny(image, 1, 25)
-
-    #DEBUG: copy images and show edge image    #---------------------------------------------------------------------------
-    test_img = image.copy()
-    test_edge_img = edges.copy()
-    edges_debug = edges.copy()
-    #plt.subplot(121), plt.imshow(image, cmap = "gray")
-    #plt.title("Original Image")#, plt.xticks([]), plt.yticks([])
-    #plt.subplot(122), plt.imshow(edges, cmap = "gray")
-    #plt.title("Edge Image")#, plt.xticks([]), plt.yticks([])
-    #plt.show()
-    #---------------------------------------------------------------------------
+    edge_img = cv2.Canny(image, 1, 25)
 
     # get circles using Hough Transform
-    circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=360, maxRadius=450)
+    circles = cv2.HoughCircles(edge_img, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=360, maxRadius=450)
     if len(circles) == 0:
         print("No circles detected")
         return 0
     circles = np.uint16(np.around(circles))
 
-    #DEBUG: draw circles    #---------------------------------------------------------------------------
-    #for i in circles[0,:]:
-    #    cv2.circle(image, (i[0], i[1]), i[2], (0, 0, 0), 2)
-    #    cv2.circle(image, (i[0], i[1]), 2, (0, 0, 0), 3)
-    #    cv2.circle(edges, (i[0], i[1]), i[2], (255, 255, 255), 2)
-    #    cv2.circle(edges, (i[0], i[1]), 2, (255, 255, 255), 3)
-    #cv2.imshow("detected circles", image)
-    #cv2.waitKey(0)
-    #cv2.imshow("detected circles with edge image", edges)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    #DEBUG: draw circles
+    #---------------------------------------------------------------------------
+#    test_edge_img = edge_img.copy()
+#    for i in circles[0,:]:
+#        cv2.circle(test_edge_img, (i[0], i[1]), i[2], (255, 255, 255), 2)
+#        cv2.circle(test_edge_img, (i[0], i[1]), 2, (255, 255, 255), 3)
+#    cv2.imshow("detected circles with edge image", test_edge_img)
+#    cv2.waitKey(0)
+#    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # average all detected circles w/in a range
@@ -214,17 +196,12 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: draw averaged circles
     #---------------------------------------------------------------------------
-    #print("x_tot: ", x_tot, " y_tot: ", y_tot, " r_tot: ", r_tot)
-    print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
-    #cv2.circle(test_img, (x_avg, y_avg), r_avg, (0, 0, 0), 2)
-    #cv2.circle(test_img, (x_avg, y_avg), 2, (0, 0, 0), 3)
-    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
-    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
-    #cv2.imshow("averaged circle", test_img)
-    #cv2.waitKey(0)
-    cv2.imshow("averaged circle with edge image", test_edge_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+#    print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
+#    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
+#    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
+#    cv2.imshow("averaged circle with edge image", test_edge_img)
+#    cv2.waitKey(0)
+#    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
@@ -232,7 +209,7 @@ def extractBestEstimatedCircle(image):
     offsets = []
     search_range = 25
 
-    edge_coords = getEdgeCoords(edges_debug, x_avg, y_avg, r_avg, search_range)
+    edge_coords = getEdgeCoords(edge_img, x_avg, y_avg, r_avg, search_range)
 
     #DEBUG: show detected coordinates
     #---------------------------------------------------------------------------
@@ -257,8 +234,8 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: check goodness and relevant values
     #---------------------------------------------------------------------------
-    print("max offset: ", max_offset, " offsets_tot: ", offsets_tot, " offsets_avg: ", offsets_avg)
-    print("goodness: ", goodness)
+#    print("max offset: ", max_offset, " offsets_tot: ", offsets_tot, " offsets_avg: ", offsets_avg)
+#    print("goodness: ", goodness)
     #---------------------------------------------------------------------------
 
     return goodness
@@ -329,15 +306,14 @@ def extractSeam(image):
     right_ang = math.pi / 2
     for idx, x in enumerate(line_params):
         if (idx + 1) <= len(line_params):
-            for y in candidates[idx+1:]:
+            for y in line_params[idx+1:]:
                 m1 = x[1] / x[0]
                 angle1 = math.atan(m1)
                 m2 = y[1] / y[0]
-                print(x)
                 angle2 = math.atan(m2)
                 diff = math.fabs(angle1 - angle2)
                 angle_diffs.append(diff)
-
+                
     seam_prob = 0
     # this contributing value determines the "likeness" of the detected, approximated contours, 
     # selecting the one with the highest value (least similar pair)
@@ -348,7 +324,7 @@ def extractSeam(image):
         ang_closeness = math.fabs(x - right_ang)
         if ang_closeness < bfl_val:
             bfl_val = ang_closeness
-            
+           
     # again, a relatively arbitrary estimate of what this probability would look like given these 
     # contributing values, the normalization factor can (and probably should) be adjusted; note that 
     # bfl_val has significantly more weight than matched_shape_val
