@@ -138,10 +138,10 @@ def extractYellowness(image):
 
     #DEBUG: display image
     #---------------------------------------------------------------------------
-#    print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
-#    cv2.imshow('analysis image', hsv_img)
-#    cv2.waitKey(0)
-#    cv2.destroyAllWindows()
+    print('size: ', total_size, ', yellow: ', num_yellow, ', yellowness: ', yellowness)
+    cv2.imshow('analysis image', hsv_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     return yellowness
@@ -173,13 +173,13 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: draw circles
     #---------------------------------------------------------------------------
-#    test_edge_img = edge_img.copy()
-#    for i in circles[0,:]:
-#        cv2.circle(test_edge_img, (i[0], i[1]), i[2], (255, 255, 255), 2)
-#        cv2.circle(test_edge_img, (i[0], i[1]), 2, (255, 255, 255), 3)
-#    cv2.imshow("detected circles with edge image", test_edge_img)
-#    cv2.waitKey(0)
-#    cv2.destroyAllWindows()
+    test_edge_img = edge_img.copy()
+    for i in circles[0,:]:
+        cv2.circle(test_edge_img, (i[0], i[1]), i[2], (255, 255, 255), 2)
+        cv2.circle(test_edge_img, (i[0], i[1]), 2, (255, 255, 255), 3)
+    cv2.imshow("detected circles with edge image", test_edge_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # average all detected circles w/in a range
@@ -196,12 +196,12 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: draw averaged circles
     #---------------------------------------------------------------------------
-#    print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
-#    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
-#    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
-#    cv2.imshow("averaged circle with edge image", test_edge_img)
-#    cv2.waitKey(0)
-#    cv2.destroyAllWindows()
+    print("x_avg: ", x_avg, " y_avg: ", y_avg, " r_avg: ", r_avg)
+    cv2.circle(test_edge_img, (x_avg, y_avg), r_avg, (255, 255, 255), 2)
+    cv2.circle(test_edge_img, (x_avg, y_avg), 2, (255, 255, 255), 3)
+    cv2.imshow("averaged circle with edge image", test_edge_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     # calculate "goodness"
@@ -213,12 +213,12 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: show detected coordinates
     #---------------------------------------------------------------------------
-#    for i in edge_coords:
-#        print("detected edge x-coordinate: ", i[0], " y-coordinate: ", i[1])
-#        cv2.circle(test_edge_img, (i[1], i[0]), 20, (255, 255, 255), 1)
-#        cv2.imshow("detected edge pts", test_edge_img)
-#        cv2.waitKey(1)
-#    cv2.destroyAllWindows()
+    for i in edge_coords:
+        print("detected edge x-coordinate: ", i[0], " y-coordinate: ", i[1])
+        cv2.circle(test_edge_img, (i[1], i[0]), 20, (255, 255, 255), 1)
+        cv2.imshow("detected edge pts", test_edge_img)
+        cv2.waitKey(1)
+    cv2.destroyAllWindows()
     #---------------------------------------------------------------------------
 
     for x in edge_coords:
@@ -234,8 +234,8 @@ def extractBestEstimatedCircle(image):
 
     #DEBUG: check goodness and relevant values
     #---------------------------------------------------------------------------
-#    print("max offset: ", max_offset, " offsets_tot: ", offsets_tot, " offsets_avg: ", offsets_avg)
-#    print("goodness: ", goodness)
+    print("max offset: ", max_offset, " offsets_tot: ", offsets_tot, " offsets_avg: ", offsets_avg)
+    print("goodness: ", goodness)
     #---------------------------------------------------------------------------
 
     return goodness
@@ -279,21 +279,21 @@ def extractSeam(image):
             [vx, vy, x_int, y_int] = cv2.fitLine(x, cv2.DIST_L2, 0, .01, .01)
             #DEBUG: draw approximated contours and best fit lines
             #---------------------------------------------------------------------------
-#            print("epsilon: ", epsilon)
-#            print("approx info: ", approx, " length: ", len(approx))
-#            cv2.drawContours(image, [approx], 0, (0, 0, 255), 2)
-#            cv2.imshow("contours on image", image)
-#            cv2.waitKey(0)
+            print("epsilon: ", epsilon)
+            print("approx info: ", approx, " length: ", len(approx))
+            cv2.drawContours(image, [approx], 0, (0, 0, 255), 2)
+            cv2.imshow("contours on image", image)
+            cv2.waitKey(0)
             
-#            left_val = int((-x_int * vy / vx) + y_int)
-#            right_val = int(((cols - x_int) * vy / vx) + y_int)
-#            cv2.line(image, (cols - 1, right_val), (0, left_val), (0, 255, 0), 2)
-#            cv2.imshow("contours on image", image)
-#            cv2.waitKey(0)
+            left_val = int((-x_int * vy / vx) + y_int)
+            right_val = int(((cols - x_int) * vy / vx) + y_int)
+            cv2.line(image, (cols - 1, right_val), (0, left_val), (0, 255, 0), 2)
+            cv2.imshow("contours on image", image)
+            cv2.waitKey(0)
             #---------------------------------------------------------------------------
             candidates.append(approx)
             line_params.append([vx, vy])
-    #cv2.destroyAllWindows()
+    cv2.destroyAllWindows()
     
     shape_matches = []
     for idx, x in enumerate(candidates):
