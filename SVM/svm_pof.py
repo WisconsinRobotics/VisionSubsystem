@@ -12,19 +12,27 @@ import feature_extractor
 
 #clf = svm.SVC(gamma=0.001, C=100.)
 
-img = cv2.imread("tennis_ball_2.jpg")
-cv2.imshow('image', img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+img = cv2.imread("tennis_ball_1.jpg")
 gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-blur_img = cv2.medianBlur(img, 45)
+blur_img = cv2.medianBlur(img, 13)
 blur_gray_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2GRAY)
 
-#height, width = img.shape[:2]
+height, width = img.shape[:2]
 
-d_img = np.reshape(gray_img, (1,np.product(gray_img.shape)))
+#DEBUG
+#---------------------------------------------------------------------------
+print(str(height) + "x" + str(width))
+cv2.imshow('image', img)
+cv2.imshow('gray image', gray_img)
+cv2.imshow('blurred image', blur_img)
+cv2.imshow('gray blurred image', blur_gray_img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+#---------------------------------------------------------------------------
 
-height, width = d_img.shape[:2]
+#d_img = np.reshape(gray_img, (1,np.product(gray_img.shape)))
+
+#height, width = d_img.shape[:2]
 
 # get features
 # features structure:
@@ -33,17 +41,16 @@ height, width = d_img.shape[:2]
 # - @2: seam probability
 features = []
 
-features.append(feature_extractor.extractYellowness(img))
-#features.append(feature_extractor.extractBestEstimatedCircle(blur_gray_img))
-#features.append(feature_extractor.extractSeam(img))
+features.append(0)#features.append(feature_extractor.extractYellowness(img))
+features.append(0)#features.append(feature_extractor.extractBestEstimatedCircle(blur_gray_img))
+features.append(feature_extractor.extractSeam(img))
 
 #DEBUG
 #---------------------------------------------------------------------------
-print(str(height) + "x" + str(width))
 print("features: ")
 print("    yellowness: ", features[0])
-#print("    circularity: ", features[1])
-#print("    seam prob: ", features[2])
+print("    circularity: ", features[1])
+print("    seam prob: ", features[2])
 #---------------------------------------------------------------------------
 
 features.clear
