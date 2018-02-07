@@ -3,6 +3,10 @@
 @author: David Fei
 """
 import tensorflow as tf
+import cv2 as cv
+
+# Make sure opencv is working
+print(cv.__version__)
 
 classes = ['tennis ball', 'no tennis ball']
 num_classes = len(classes)
@@ -16,4 +20,4 @@ batch_size = 16
 
 # TODO: Implement the dataset class to give it the functionality to read images from the training
 # and test data folders.
-data = dataset.read_train_sets(train_path, img_size, classes, validation_size=validation_size)
+# data = dataset.read_train_sets(train_path, img_size, classes, validation_size=validation_size)
