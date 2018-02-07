@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pics</folder>
+	<filename>bbf537c045b556b228bacd5c00c7f9c193c2608a.jpg</filename>
+	<path>C:\Users\Mali\Downloads\ImageNet Tree View\pics\bbf537c045b556b228bacd5c00c7f9c193c2608a.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>135</width>
+		<height>135</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>32</xmin>
+			<ymin>11</ymin>
+			<xmax>112</xmax>
+			<ymax>93</ymax>
+		</bndbox>
+	</object>
+</annotation>
