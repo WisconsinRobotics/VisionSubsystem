@@ -5,3 +5,4 @@ Currently this repository is divided into the two main paths taken to accomplish
 1) Convolutional Neural Networks
 2) Support Vector Machines 
 
+NOTE: when using the batch image rename script (found in Training Data), please be sure ONLY image files are in that folder, the script does not discriminate betwween files and will rename every file in the folder (including extension)
