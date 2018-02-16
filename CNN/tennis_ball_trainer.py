@@ -5,10 +5,22 @@
 import tensorflow as tf
 import cv2 as cv
 
+class Dataset:
+    def __init__(self):
+        self.images = []
+        self.labels = []
+        self.img_names = []
+        self.cls = [] 
+
+    def read_train_sets(self, train_path, img_size, classes, validation_size):
+        for field in classes:
+            index = classes.index(field)
+
+
 # Make sure opencv is working
 print(cv.__version__)
 
-classes = ['tennis ball', 'no tennis ball']
+classes = ['tennis ball']
 num_classes = len(classes)
 train_path = 'training_data'
 
