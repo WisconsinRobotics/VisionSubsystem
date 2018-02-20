@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pics</folder>
+	<filename>img_0118.jpg</filename>
+	<path>C:\Users\Mali\Documents\VisionSubsystem\Training Data\ImageNet Tree View - Mayank\pics\img_0118.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>112</width>
+		<height>112</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>22</xmin>
+			<ymin>19</ymin>
+			<xmax>92</xmax>
+			<ymax>89</ymax>
+		</bndbox>
+	</object>
+</annotation>
