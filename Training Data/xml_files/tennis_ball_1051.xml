@@ -1,0 +1,26 @@
+<annotation>
+	<folder>tennis-ball_boxes_data</folder>
+	<filename>tennis_ball_1051.jpg</filename>
+	<path>C:\Users\ap\Documents\School\Undergraduate\Robotics\Autonomy\Projects\VisionSubsystem\tennis-ball_boxes_data\tennis_ball_1051.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>240</width>
+		<height>160</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>1</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1</xmin>
+			<ymin>42</ymin>
+			<xmax>73</xmax>
+			<ymax>111</ymax>
+		</bndbox>
+	</object>
+</annotation>
