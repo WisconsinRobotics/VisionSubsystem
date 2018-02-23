@@ -151,6 +151,8 @@ with detection_graph.as_default():
           feed_dict={image_tensor: image_np_expanded})
       # Visualization of the results of a detection.
       vis_util.visualize_boxes_and_labels_on_image_array(
+          w,
+          h,
           image_np,
           np.squeeze(boxes),
           np.squeeze(classes).astype(np.int32),

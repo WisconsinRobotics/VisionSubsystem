@@ -58,6 +58,9 @@ STANDARD_COLORS = [
     'Teal', 'Thistle', 'Tomato', 'Turquoise', 'Violet', 'Wheat', 'White',
     'WhiteSmoke', 'Yellow', 'YellowGreen'
 ]
+KNOWN_WIDTH = 2.6
+FOCAL_LENGTH = 112.0
+FT_TO_M_CONV_FACTOR = 3.28084
 
 
 def save_image_array_as_png(image, output_path):
@@ -382,7 +385,9 @@ def draw_mask_on_image_array(image, mask, color='red', alpha=0.7):
   np.copyto(image, np.array(pil_image.convert('RGB')))
 
 
-def visualize_boxes_and_labels_on_image_array(image,
+def visualize_boxes_and_labels_on_image_array(x_res,
+                                              y_res,
+                                              image,
                                               boxes,
                                               classes,
                                               scores,
@@ -471,8 +476,11 @@ def visualize_boxes_and_labels_on_image_array(image,
   for box, color in box_to_color_map.items():
     if color != 'black':
       ymin, xmin, ymax, xmax = box
-      print(ymin)
-      print(ymax)
+      
+      # DEBUG
+      print("y_min: ", ymin)
+      print("y_max: ", ymax)
+
       if instance_masks is not None:
         draw_mask_on_image_array(
             image,
@@ -489,6 +497,14 @@ def visualize_boxes_and_labels_on_image_array(image,
           thickness=line_thickness,
           display_str_list=box_to_display_str_map[box],
           use_normalized_coordinates=use_normalized_coordinates)
+
+      # get distance to tennis ball
+      res = [x_res, y_res]
+      cam_w_actual = (ymax - ymin) * y_res
+      dist_ft = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
+      dist = dist_ft / FT_TO_M_CONV_FACTOR
+      print("Distance to Tennis Ball [m]: ", dist)
+
       if keypoints is not None:
         draw_keypoints_on_image_array(
             image,
