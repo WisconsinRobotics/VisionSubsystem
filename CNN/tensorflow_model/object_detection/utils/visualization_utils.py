@@ -453,8 +453,10 @@ def visualize_boxes_and_labels_on_image_array(x_res,
       # get distance to tennis ball
       res = [x_res, y_res]
       cam_w_actual = (ymax - ymin) * y_res
-      dist_ft = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
+      dist_in = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
+      dist_ft = dist_in / 12
       dist = dist_ft / FT_TO_M_CONV_FACTOR
+      #print("Distance to Tennis Ball [m]: ", dist)
       if instance_masks is not None:
         box_to_instance_masks_map[box] = instance_masks[i]
       if keypoints is not None:
@@ -469,11 +471,11 @@ def visualize_boxes_and_labels_on_image_array(x_res,
             class_name = category_index[classes[i]]['name']
           else:
             class_name = 'N/A'''
-          display_str = '{}: {}%'.format(
-              class_name, dist)
-              #int(100*scores[i]))
+          display_str = '{}: {} [m]'.format(class_name, round(dist,3))
+            #int(100*scores[i]))
         else:
-          display_str = 'score: {}%'.format(int(100 * scores[i]))
+          #display_str = 'score: {}%'.format(int(100 * scores[i]))
+          display_str = '{}: {} [m]'.format(class_name, round(dist,3))
         box_to_display_str_map[box].append(display_str)
         if agnostic_mode:
           box_to_color_map[box] = 'DarkOrange'
@@ -487,11 +489,6 @@ def visualize_boxes_and_labels_on_image_array(x_res,
   for box, color in box_to_color_map.items():
     if color != 'black':
       ymin, xmin, ymax, xmax = box
-      # get distance to tennis ball
-      res = [x_res, y_res]
-      cam_w_actual = (ymax - ymin) * y_res
-      dist_ft = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
-      dist = dist_ft / FT_TO_M_CONV_FACTOR
 
       if instance_masks is not None:
         draw_mask_on_image_array(
@@ -509,14 +506,6 @@ def visualize_boxes_and_labels_on_image_array(x_res,
           thickness=line_thickness,
           display_str_list=box_to_display_str_map[box],
           use_normalized_coordinates=use_normalized_coordinates)
-
-      # get distance to tennis ball
-      res = [x_res, y_res]
-      cam_w_actual = (ymax - ymin) * y_res
-      dist_in = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
-      dist_ft = dist_in / 12
-      dist = dist_ft / FT_TO_M_CONV_FACTOR
-      print("Distance to Tennis Ball [m]: ", dist)
 
       if keypoints is not None:
         draw_keypoints_on_image_array(

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pics</folder>
+	<filename>img_0244.jpg</filename>
+	<path>C:\Users\ap\Documents\School\Undergraduate\Robotics\Autonomy\Projects\VisionSubsystem\VisionSubsystem\Training Data\tennis-ball-data-mayank\pics\img_0244.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>96</width>
+		<height>145</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>55</xmin>
+			<ymin>106</ymin>
+			<xmax>89</xmax>
+			<ymax>138</ymax>
+		</bndbox>
+	</object>
+</annotation>
