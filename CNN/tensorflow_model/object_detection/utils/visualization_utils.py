@@ -59,7 +59,10 @@ STANDARD_COLORS = [
     'WhiteSmoke', 'Yellow', 'YellowGreen'
 ]
 KNOWN_WIDTH = 2.6
-FOCAL_LENGTH = 922
+# Old Focal Length
+#FOCAL_LENGTH = 112.0
+# Re-Measured Focal Length
+FOCAL_LENGTH = 647.6307647
 FT_TO_M_CONV_FACTOR = 3.28084
 
 
@@ -407,6 +410,8 @@ def visualize_boxes_and_labels_on_image_array(x_res,
   that same image.
 
   Args:
+    xres: width of image stream (i.e. camera feed) in pixels
+    yres: height of image stream (i.e. camera feed) in pixels
     image: uint8 numpy array with shape (img_height, img_width, 3)
     boxes: a numpy array of shape [N, 4]
     classes: a numpy array of shape [N]. Note that class indices are 1-based,
@@ -505,7 +510,12 @@ def visualize_boxes_and_labels_on_image_array(x_res,
           display_str_list=box_to_display_str_map[box],
           use_normalized_coordinates=use_normalized_coordinates)
 
-      
+      # get distance to tennis ball
+      res = [x_res, y_res]
+      cam_w_actual = (ymax - ymin) * y_res
+      dist_in = (KNOWN_WIDTH * FOCAL_LENGTH) / cam_w_actual
+      dist_ft = dist_in / 12
+      dist = dist_ft / FT_TO_M_CONV_FACTOR
       print("Distance to Tennis Ball [m]: ", dist)
 
       if keypoints is not None:
