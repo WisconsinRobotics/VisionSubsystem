@@ -1,7 +1,7 @@
 <annotation>
 	<folder>pics</folder>
 	<filename>img_0286.jpg</filename>
-	<path>C:\Users\Mali\Documents\VisionSubsystem\Training Data\tennis-ball-data-mayank\pics\img_0286.jpg</path>
+	<path>C:\Users\ap\Documents\School\Undergraduate\Robotics\Autonomy\Projects\VisionSubsystem\VisionSubsystem\Training Data\tennis-ball-data-mayank\pics\img_0286.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -17,10 +17,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>65</xmin>
+			<xmin>64</xmin>
 			<ymin>6</ymin>
-			<xmax>176</xmax>
-			<ymax>121</ymax>
+			<xmax>177</xmax>
+			<ymax>118</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -31,8 +31,8 @@
 		<bndbox>
 			<xmin>3</xmin>
 			<ymin>113</ymin>
-			<xmax>120</xmax>
-			<ymax>235</ymax>
+			<xmax>118</xmax>
+			<ymax>232</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -41,10 +41,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>126</xmin>
-			<ymin>117</ymin>
-			<xmax>239</xmax>
-			<ymax>235</ymax>
+			<xmin>125</xmin>
+			<ymin>116</ymin>
+			<xmax>238</xmax>
+			<ymax>234</ymax>
 		</bndbox>
 	</object>
 </annotation>
