@@ -1,0 +1,50 @@
+<annotation>
+	<folder>pics</folder>
+	<filename>img_0386.jpg</filename>
+	<path>C:\Users\Mali\Documents\VisionSubsystem\Training Data\tennis-ball-data-mayank\pics\img_0386.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>240</width>
+		<height>183</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>153</xmin>
+			<ymin>159</ymin>
+			<xmax>160</xmax>
+			<ymax>166</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>72</xmin>
+			<ymin>64</ymin>
+			<xmax>78</xmax>
+			<ymax>72</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>184</xmin>
+			<ymin>23</ymin>
+			<xmax>192</xmax>
+			<ymax>31</ymax>
+		</bndbox>
+	</object>
+</annotation>
