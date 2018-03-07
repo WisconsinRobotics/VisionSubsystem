@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pics</folder>
+	<filename>img_0559.jpg</filename>
+	<path>C:\Users\mgder\OneDrive\Documents\GitHub\VisionSubsystem\VisionSubsystem\Training Data\tennis-ball-data-mayank\pics\img_0559.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>240</width>
+		<height>160</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tennis ball</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>79</xmin>
+			<ymin>84</ymin>
+			<xmax>97</xmax>
+			<ymax>97</ymax>
+		</bndbox>
+	</object>
+</annotation>
