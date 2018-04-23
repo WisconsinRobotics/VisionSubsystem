@@ -4,15 +4,42 @@ import tensorflow as tf
 import cv2
 import csv
 
+def parse_predict_input(filename, label):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_image(image_string)
+    image_typecasted = tf.cast(image_decoded, tf.float32)
+    image_reshaped = tf.reshape(image_typecasted, [-1, 96, 96, 3])
+    return image_reshaped, label
+
+def parse_predict_input(filename):
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_image(image_string)
+    image_typecasted = tf.cast(image_decoded, tf.float32)
+    image_reshaped = tf.reshape(image_typecasted, [-1, 96, 96, 3])
+    return image_reshaped
+
+# https://stackoverflow.com/questions/49698567/how-to-save-tensorflow-model-using-estimator-export-savemodel/49805051
+def serving_input_receiver_fn():
+    #serialized_tf_example = tf.placeholder(dtype=tf.string, shape=[None], name="input_tensors")
+    serialized_tf_example = tf.placeholder(dtype=tf.string, name="input_tensors")
+    receiver_tensors = {"predictor_inputs": serialized_tf_example}
+    feature_spec = {'x': tf.FixedLenFeature(shape=[96, 96, 3], dtype=tf.float32)}
+    test_features = tf.parse_example(serialized_tf_example, feature_spec)
+#    temp = test_features['x']
+#    images_temp = tf.map_fn(parse_predict_input, temp, dtype=tf.float32)
+    return tf.estimator.export.ServingInputReceiver(test_features, receiver_tensors)
+
 def cnn_model_fn(features, labels, mode):
   """
   Model function for CNN.
   """
+  features = features[list(features.keys())[0]]
 
-  # Input Layer
-  #   - 96x96
-  # [batch_size, width, height, channels]
-#  input_layer = tf.reshape(features["x"], [-1, 96, 96, 3])
+  # NOTE: only uncomment and use this if saving entire file AFTER training
+  # TODO: figure out proper way to do this
+  print(features)
+  features = tf.reshape(features, [-1, 96, 96, 3])
+  print(features)
 
   # Feature Extractor:
   # ---------------------------------------------------------------------------------------------------------
@@ -22,7 +49,7 @@ def cnn_model_fn(features, labels, mode):
   # Output: [batch_size, 82, 82, 50]
   # https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
   conv1 = tf.layers.conv2d(
-      inputs=features["x"],
+      inputs=features,
       filters=50,
       kernel_size=[15, 15],
       padding="valid",
@@ -83,33 +110,35 @@ def cnn_model_fn(features, labels, mode):
       "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
   }
   if mode == tf.estimator.ModeKeys.PREDICT:
-    return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+    export_outputs = {'predict_output': tf.estimator.export.PredictOutput(predictions)}
+    return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions, export_outputs=export_outputs)
 
   # Calculate Loss (for both TRAIN and EVAL modes)
-  #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
-  loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tf.one_hot(labels, depth=2), logits=logits))
+  loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
 
   # Configure the Training Op (for TRAIN mode)
   if mode == tf.estimator.ModeKeys.TRAIN:
+    print("features: ")
+    print(type(features))
+    print(features)
+    print("labels: ")
+    print(labels.dtype)
+    print(labels.get_shape().as_list())
     print("logits layer: ")
-    print(type(logits))
+    print(logits.dtype)
     print(logits.get_shape().as_list())
     print("loss layer: ")
-    print(type(loss))
+    print(loss.dtype)
     print(loss.get_shape().as_list())
-    loss_val = tf.losses.compute_weighted_loss(losses=loss)
-    print("loss value: ")
-    print(type(loss_val))
-    print(loss_val)
 
     # DEBUG
     #exit()
 
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.00001)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.0001)
     train_op = optimizer.minimize(
         loss=loss,
         global_step=tf.train.get_global_step())
-    return tf.estimator.EstimatorSpec(mode=mode, loss=loss_val, train_op=train_op)
+    return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
   # Add evaluation metrics (for EVAL mode)
   eval_metric_ops = {
@@ -160,7 +189,7 @@ def main(unused_argv):
   #exit()
 
   # Create the Estimator
-  mnist_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="./tb_cnn_model")
+  tb_classifier = tf.estimator.Estimator(model_fn=cnn_model_fn, model_dir="./tb_cnn_model")
 
   # Set up logging for predictions, specifically "probabilities" from "softmax" tensor
   tensors_to_log = {"probabilities": "softmax_tensor"}
@@ -170,24 +199,27 @@ def main(unused_argv):
   train_input_fn = tf.estimator.inputs.numpy_input_fn(
       x={"x": train_data},
       y=train_labels,
-      batch_size=10,
+      batch_size=25,
       num_epochs=None,
       shuffle=True)
-  mnist_classifier.train(
-      input_fn=train_input_fn,
-      steps=10000,
-      hooks=[logging_hook])
+#  tb_classifier.train(
+#      input_fn=train_input_fn,
+#      steps=10000,
+#      hooks=[logging_hook])
 
   # Test
   eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-      x={"x": eval_data},
-      y=eval_labels,
+      x={"x": test_data},
+      y=test_labels,
       num_epochs=1,
       shuffle=False)
 
   # Results
-  eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
+  eval_results = tb_classifier.evaluate(input_fn=eval_input_fn)
   print(eval_results)
+
+  # Export
+  full_model_dir = tb_classifier.export_savedmodel(export_dir_base="./tb_cnn_model_serve", serving_input_receiver_fn=serving_input_receiver_fn)
 
 if __name__ == "__main__":
   tf.app.run()
