@@ -4,29 +4,13 @@ import tensorflow as tf
 import cv2
 import csv
 
-def parse_predict_input(filename, label):
-    image_string = tf.read_file(filename)
-    image_decoded = tf.image.decode_image(image_string)
-    image_typecasted = tf.cast(image_decoded, tf.float32)
-    image_reshaped = tf.reshape(image_typecasted, [-1, 96, 96, 3])
-    return image_reshaped, label
-
-def parse_predict_input(filename):
-    image_string = tf.read_file(filename)
-    image_decoded = tf.image.decode_image(image_string)
-    image_typecasted = tf.cast(image_decoded, tf.float32)
-    image_reshaped = tf.reshape(image_typecasted, [-1, 96, 96, 3])
-    return image_reshaped
-
+# Helpful Resources:
 # https://stackoverflow.com/questions/49698567/how-to-save-tensorflow-model-using-estimator-export-savemodel/49805051
 def serving_input_receiver_fn():
-    #serialized_tf_example = tf.placeholder(dtype=tf.string, shape=[None], name="input_tensors")
     serialized_tf_example = tf.placeholder(dtype=tf.string, name="input_tensors")
     receiver_tensors = {"predictor_inputs": serialized_tf_example}
-    feature_spec = {'x': tf.FixedLenFeature(shape=[96, 96, 3], dtype=tf.float32)}
+    feature_spec = {'x': tf.FixedLenSequenceFeature(shape=[96, 96, 3], dtype=tf.float32, allow_missing=True)}
     test_features = tf.parse_example(serialized_tf_example, feature_spec)
-#    temp = test_features['x']
-#    images_temp = tf.map_fn(parse_predict_input, temp, dtype=tf.float32)
     return tf.estimator.export.ServingInputReceiver(test_features, receiver_tensors)
 
 def cnn_model_fn(features, labels, mode):

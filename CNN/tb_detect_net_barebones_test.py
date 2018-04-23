@@ -22,27 +22,33 @@ def main():
 
     assert not np.any(np.isnan(predict_data))
 
+    print("original shape: ")
     print(type(predict_data))
     print(predict_data.shape)
-    predict_data = predict_data.tolist()
+    predict_data = predict_data.flatten()
+    print("flattened shape: ")
     print(type(predict_data))
+    print(predict_data.shape)
+    #predict_data = predict_data.tolist()
 
     # DEBUG
     #exit()
 
     # predict
-    full_model_dir = "./tb_cnn_model_serve/1524374350"
+    full_model_dir = "./tb_cnn_model_serve/1524464001"
     with tf.Session() as sess:
         tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], full_model_dir)
         predictor = tf.contrib.predictor.from_saved_model(full_model_dir)
-        print("before test")
-        test = tf.train.FloatList(value=predict_data)
-        print("after test")
-        model_input = tf.train.Example(features=tf.train.Features(features={"x": tf.train.Feature(float_list=tf.train.FloatList(value=predict_data))}))
+        model_input = tf.train.Example(features=tf.train.Features(feature={"x": tf.train.Feature(float_list=tf.train.FloatList(value=predict_data))}))
         model_input = model_input.SerializeToString()
         output_dict = predictor({"predictor_inputs":[model_input]})
-        y_predicted = output_dict["pred_output_classes"][0]
-        print(y_predicted)
+        for idx, pred in enumerate(output_dict["classes"]):
+            if 1 == output_dict["classes"][idx]:
+                sureness = output_dict["probabilities"][idx][1]
+                print("predicted - contains tennis ball with sureness: ", sureness)
+            else:
+                sureness = output_dict["probabilities"][idx][0]
+                print("predicted - does NOT contains tennis ball with sureness: ", sureness)
 
 if __name__ == "__main__":
   main()
