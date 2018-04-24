@@ -9,7 +9,7 @@ import csv
 def serving_input_receiver_fn():
     serialized_tf_example = tf.placeholder(dtype=tf.string, name="input_tensors")
     receiver_tensors = {"predictor_inputs": serialized_tf_example}
-    feature_spec = {'x': tf.FixedLenSequenceFeature(shape=[96, 96, 3], dtype=tf.float32, allow_missing=True)}
+    feature_spec = {'x': tf.FixedLenSequenceFeature(shape=[150, 150, 3], dtype=tf.float32, allow_missing=True)}
     test_features = tf.parse_example(serialized_tf_example, feature_spec)
     return tf.estimator.export.ServingInputReceiver(test_features, receiver_tensors)
 
@@ -22,15 +22,15 @@ def cnn_model_fn(features, labels, mode):
   # NOTE: only uncomment and use this if saving entire file AFTER training
   # TODO: figure out proper way to do this
   print(features)
-  features = tf.reshape(features, [-1, 96, 96, 3])
+  features = tf.reshape(features, [-1, 150, 150, 3])
   print(features)
 
   # Feature Extractor:
   # ---------------------------------------------------------------------------------------------------------
   # Convolutional Layer #1
   # 15x15 kernel, 50 filters
-  # Input: [batch_size, 96, 96, 3]
-  # Output: [batch_size, 82, 82, 50]
+  # Input: [batch_size, 150, 150, 3]
+  # Output: [batch_size, 136, 136, 50]
   # https://www.quora.com/How-can-I-calculate-the-size-of-output-of-convolutional-layer
   conv1 = tf.layers.conv2d(
       inputs=features,
@@ -40,40 +40,74 @@ def cnn_model_fn(features, labels, mode):
       activation=tf.nn.relu)
 
   # Pooling Layer #1
-  # 6x6 pool, stride size of 2
-  # Input: [batch_size, 82, 82, 30]
-  # Output: [batch_size, 39, 39, 30]
+  # 4x4 pool, stride size of 2
+  # Input: [batch_size, 136, 136, 50]
+  # Output: [batch_size, 67, 67, 50]
   # *see above ^
-  pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[6, 6], strides=2)
+  pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[4, 4], strides=2)
 
   # Convolutional Layer #2
-  # 5x5 kernel, 100 filters
-  # Input: [batch_size, 39, 39, 30]
-  # Output: [batch_size, 35, 35, 100]
+  # 5x5 kernel, 75 filters
+  # Input: [batch_size, 67, 67, 50]
+  # Output: [batch_size, 63, 63, 75]
   conv2 = tf.layers.conv2d(
       inputs=pool1,
-      filters=100,
+      filters=75,
       kernel_size=[5, 5],
       padding="valid",
       activation=tf.nn.relu)
 
   # Pooling Layer #2
   # 3x3 pool, stride size of 2
-  # Input: [batch_size, 35, 35, 100]
-  # Output: [batch_size, 17, 17, 100]
+  # Input: [batch_size, 63, 63, 75]
+  # Output: [batch_size, 31, 31, 75]
   pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[3, 3], strides=2)
+
+  # Convolutional Layer #3
+  # 3x3 kernel, 100 filters
+  # Input: [batch_size, 31, 31, 75]
+  # Output: [batch_size, 29, 29, 100]
+  conv3 = tf.layers.conv2d(
+      inputs=pool2,
+      filters=100,
+      kernel_size=[3, 3],
+      padding="valid",
+      activation=tf.nn.relu)
+
+  # Pooling Layer #3
+  # 3x3 pool, stride size of 2
+  # Input: [batch_size, 29, 29, 100]
+  # Output: [batch_size, 14, 14, 100]
+  pool3 = tf.layers.max_pooling2d(inputs=conv3, pool_size=[3, 3], strides=2)
+
+  # Convolutional Layer #4
+  # 3x3 kernel, 150 filters
+  # Input: [batch_size, 14, 14, 100]
+  # Output: [batch_size, 12, 12, 150]
+  conv4 = tf.layers.conv2d(
+      inputs=pool3,
+      filters=150,
+      kernel_size=[3, 3],
+      padding="valid",
+      activation=tf.nn.relu)
+
+  # Pooling Layer #3
+  # 2x2 pool, stride size of 2
+  # Input: [batch_size, 12, 12, 150]
+  # Output: [batch_size, 6, 6, 150]
+  pool4 = tf.layers.max_pooling2d(inputs=conv4, pool_size=[2, 2], strides=2)
 
   # Determination:
   # ---------------------------------------------------------------------------------------------------------
   # Flatten tensor into a batch of vectors
-  # Input Tensor Shape: [batch_size, 17, 17, 100]
-  # Output Tensor Shape: [batch_size, 17 * 17 * 100]
-  pool2_flat = tf.reshape(pool2, [-1, 17 * 17 * 100])
+  # Input Tensor Shape: [batch_size, 6, 6, 150]
+  # Output Tensor Shape: [batch_size, 6 * 6 * 150]
+  pool4_flat = tf.reshape(pool4, [-1, 6 * 6 * 150])
 
   # Dense Layer
-  # Input Tensor Shape: [batch_size, 17 * 17 * 150]
+  # Input Tensor Shape: [batch_size, 6 * 6 * 150]
   # Output Tensor Shape: [batch_size, 1024]
-  dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+  dense = tf.layers.dense(inputs=pool4_flat, units=1024, activation=tf.nn.relu)
 
   # Add dropout operation; 0.6 probability that element will be kept
   dropout = tf.layers.dropout(
@@ -132,9 +166,9 @@ def cnn_model_fn(features, labels, mode):
 
 def main(unused_argv):
   # Load training and testing data
-  train_data = np.zeros(shape=(200, 96, 96, 3))
-  train_labels = np.zeros(shape=(200))
-  test_data = np.zeros(shape=(50, 96, 96, 3))
+  train_data = np.zeros(shape=(1000, 150, 150, 3))
+  train_labels = np.zeros(shape=(1000))
+  test_data = np.zeros(shape=(50, 150, 150, 3))
   test_labels = np.zeros(shape=(50))
   train_directory = "./temp_data/alex-training-data"
   train_labels_file = "./temp_data/train-labels.csv"
@@ -142,7 +176,7 @@ def main(unused_argv):
   test_labels_file = "./temp_data/test-labels.csv"
   for idx, img in enumerate(os.listdir(train_directory)):
       loaded_img = cv2.imread(train_directory + '/' + img)
-      resized_img = cv2.resize(loaded_img, (96, 96))
+      resized_img = cv2.resize(loaded_img, (150, 150))
       resized_img = (resized_img / (np.max(resized_img)/2)) - 1
       train_data[idx] = resized_img
   with open(train_labels_file, newline='') as csvfile:
@@ -152,7 +186,7 @@ def main(unused_argv):
 
   for idx, img in enumerate(os.listdir(test_directory)):
       loaded_img = cv2.imread(test_directory + '/' + img)
-      resized_img = cv2.resize(loaded_img, (96, 96))
+      resized_img = cv2.resize(loaded_img, (150, 150))
       resized_img = (resized_img / (np.max(resized_img)/2)) - 1
       test_data[idx] = resized_img
   with open(test_labels_file, newline='') as csvfile:
@@ -169,6 +203,11 @@ def main(unused_argv):
   assert not np.any(np.isnan(test_data))
   assert not np.any(np.isnan(test_labels))
 
+  #print(train_data.shape)
+  #print(train_labels.shape)
+  #print(test_data.shape)
+  #print(test_labels.shape)
+
   # DEBUG
   #exit()
 
@@ -183,12 +222,12 @@ def main(unused_argv):
   train_input_fn = tf.estimator.inputs.numpy_input_fn(
       x={"x": train_data},
       y=train_labels,
-      batch_size=25,
+      batch_size=10,
       num_epochs=None,
       shuffle=True)
 #  tb_classifier.train(
 #      input_fn=train_input_fn,
-#      steps=10000,
+#      steps=20000,
 #      hooks=[logging_hook])
 
   # Test

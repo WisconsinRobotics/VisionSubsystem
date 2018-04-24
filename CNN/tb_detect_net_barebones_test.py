@@ -11,11 +11,11 @@ def main():
     # preprocess images
     # images to be predicted should be placed in: ./tb_test_images
     # NOTE: change the first index to the number of images in the directory
-    predict_data = np.zeros(shape=(10, 96, 96, 3))
+    predict_data = np.zeros(shape=(10, 150, 150, 3))
     predict_directory = "./tb_test_images"
     for idx, img in enumerate(os.listdir(predict_directory)):
         loaded_img = cv2.imread(predict_directory + '/' + img)
-        resized_img = cv2.resize(loaded_img, (96, 96))
+        resized_img = cv2.resize(loaded_img, (150, 150))
         resized_img = (resized_img / (np.max(resized_img)/2)) - 1
         predict_data[idx] = resized_img
     predict_data = predict_data.astype(np.float32)
@@ -35,7 +35,7 @@ def main():
     #exit()
 
     # predict
-    full_model_dir = "./tb_cnn_model_serve/1524464001"
+    full_model_dir = "./tb_cnn_model_serve/1524550001"
     with tf.Session() as sess:
         tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], full_model_dir)
         predictor = tf.contrib.predictor.from_saved_model(full_model_dir)
