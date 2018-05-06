@@ -1,3 +1,4 @@
+import tensorflow as tf
 import math
 import cv2
 import numpy as np
@@ -23,8 +24,6 @@ output_info = []
 CIRCLE_MIN_R = 2
 KERNEL_SIZE = 15
 
-#min_HSV = np.array([30,50,0])
-#max_HSV = np.array([50,255,255])
 min_HSV = np.array([25,50,0])
 max_HSV = np.array([75,255,255])
 
@@ -35,54 +34,51 @@ r_final = None
 tb_dist_final = None
 detect_timestamp = None
 
-# NOTE: difficult/relevant test case images
-#         - img_1042.jpg
-#         - img_1036.jpg
-#         - img_1014.jpg
-#         - img_1010.jpg
-#         - img_1003.jpg
-#         - img_1000.jpg
-#         - img_0974.jpg
-#         - img_0973.jpg
-#         - img_0956.jpg
-#         - img_0955.jpg
-#         - img_0954.jpg
-#         - img_0950.jpg
-#         - img_0942.jpg
-#         - img_0924.jpg
-#         - img_0914.jpg
-#         - img_0912.jpg
-#         - img_0879.jpg
-#         - img_0875.jpg
-temp_path = r"..\Training Data\tennis-ball-dataset\pics"
-#temp_path = r".\tb_test_images"
+temp_path = r".\tb_test_images"
 debug = True
-image_debug = True
+image_debug = False
 advanced_debug = False
 
-def sharpenImg(image):
-    clahe = cv2.createCLAHE(clipLimit=5, tileGridSize=(5,5))
+# start Tensorflow cnn session
+sess = tf.Session()
 
-    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-    l,a,b = cv2.split(lab_img)
+def getNetDetections(image):
+    # preprocess images
+    predict_data = np.zeros(shape=(1, 150, 150, 3))
+    resized_img = cv2.resize(image, (150, 150))
+    resized_img = (resized_img / (np.max(resized_img)/2)) - 1
+    predict_data[0] = resized_img
+    predict_data = predict_data.astype(np.float32)
 
-    l2 = clahe.apply(l)
+    assert not np.any(np.isnan(predict_data))
 
-    lab_img = cv2.merge((l2,a,b))
-    res_img = cv2.cvtColor(lab_img, cv2.COLOR_LAB2BGR)
+    predict_data = predict_data.flatten()
 
-    # DEBUG: display contrasted image
-    #---------------------------------------------------------------------------
-    if image_debug:
-        print(" *** DEBUG: display contrasted image(s)")
-        cv2.imshow('image', image)
-        cv2.imshow('lab img', lab_img)
-        cv2.imshow('res img', res_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-    #---------------------------------------------------------------------------
+    # DEBUG
+    if debug:
+        print("original shape: ")
+        print(type(predict_data))
+        print(predict_data.shape)
+        print("flattened shape: ")
+        print(type(predict_data))
+        print(predict_data.shape)
+        #exit()
 
-    return res_img
+    # predict
+    full_model_dir = "./tb_cnn_model_serve/1524550001"
+    tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], full_model_dir)
+    predictor = tf.contrib.predictor.from_saved_model(full_model_dir)
+    model_input = tf.train.Example(features=tf.train.Features(feature={"x": tf.train.Feature(float_list=tf.train.FloatList(value=predict_data))}))
+    model_input = model_input.SerializeToString()
+    output_dict = predictor({"predictor_inputs":[model_input]})
+    if 1 == output_dict["classes"][0]:
+        sureness = output_dict["probabilities"][0][1]
+        if debug: print("predicted - contains tennis ball with sureness: ", sureness)
+        if sureness >= 0.6:
+            return True
+    else:
+        if debug: print("predicted - does NOT contains tennis ball")
+        return False
 
 def getHsvMask(image):
     hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -90,7 +86,6 @@ def getHsvMask(image):
 
     # setup mask for image
     mask = cv2.inRange(hsv_img, min_HSV, max_HSV)
-    #hsv_img[np.where(mask==0)] = 0
 
     # erode and dilate mask
     mask = cv2.erode(mask, None, iterations=1)
@@ -176,28 +171,16 @@ def getBallLoc(image):
 
     timestamp = time.time()
 
-    #return x_avg, y_avg, r_avg, timestamp
     return x_best, y_best, r_best, timestamp
 
 
 def getBallDist(x, y, r, h, w):
-    # what was used in the Google adapted network
-    # conversion between resolutions
-    # for reference:
-    #  - IMG_W or x_res = 1920
-    #  - IMG_H or y_res = 1080
-    #ymin, xmin, ymax, xmax = box
-    #res = [IMG_W, IMG_H]
-    #r = (ymax - ymin) * y_res
-
     # get distance
     dist_in = (TB_KNOWN_W * CAM_FOCAL_L) / (r*2)
     dist_ft = dist_in / 12
     dist = dist_ft / FT_TO_M_CONV_FACTOR
 
     # get angle from (0,0) in center of image
-    #x_map = x - IMG_W/2
-    #y_map = y - IMG_H/2
     x_map = x - w/2
     y_map = y - h/2
     euc_dist = math.hypot(x_map, y_map)
@@ -328,46 +311,45 @@ def checkCircle(orig_hsv_image, hsv_image, x_start, y_start, r_avg, thresh, h, w
 
 
 def main():
-    # see AI-ROCKS/Drive/Models/Camera.cs for references and structure
     # setup
-    # ---------------------------------------------------------------------------
-    # NOTE: replace <placeholder> code with what will be used for the image input
-    # <placeholder>
+    # TODO: replace below (i.e. between ***) with setting up ROS/topic functionality
+    # ***************************************************************************
     image_buf = []
-    for f in os.listdir(temp_path):
+    for idx, f in enumerate(os.listdir(temp_path)):
+        if idx > 100:
+            break
         filepath = os.path.join(temp_path, f)
         image_buf.append(filepath)
     num_found = 0
     num_not_found = 0
-    first = True
-    test_cnt = 0
+    # ***************************************************************************
 
+    first = True
     global frame_stack
     start_time = time.time()
 
     # main loop
     while (True):
         # read and/or load next frame
-        # ---------------------------------------------------------------------------
-        # NOTE: replace <placeholder> code with what will be used for the image input
-        # <placeholder>
+        # TODO: replace below (i.e. between ***) with getting next image from topic
+        # ***************************************************************************
         if not image_buf:
             break
         next_img= cv2.imread(image_buf.pop())
-        test_cnt += 1
-        if test_cnt > 100:
-            break
+        # ***************************************************************************
 
         if len(frame_stack) >= MAX_STACK_SIZE:
-            print("stack size = ", len(frame_stack))
-            print("purging stack")
+            # DEBUG
+            if debug:
+                print("purging stack")
             frame_stack = []
         else:
             frame_stack.append(next_img)
 
-            # TODO: check this calculation
             t_diff = time.time() - start_time
-            print("\ntime calc", t_diff, ", ref: ", (1/15))
+            # DEBUG
+            if debug:
+                print("\ntime calc", t_diff, ", ref: ", (1/15))
             if (t_diff > (1/15)) or first:
                 first = False
                 start_time = time.time()
@@ -375,112 +357,104 @@ def main():
                 print("reading next image")
                 img = frame_stack.pop()
 
-                # pre-processing
-                # ---------------------------------------------------------------------------
-                height, width = img.shape[:2]
+                # confirm image w/ cnn
+                detected = getNetDetections(img)
 
-                gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                blur_img = cv2.medianBlur(img, KERNEL_SIZE)
-                #gray_blur_img = cv2.cvtColor(blur_img, cv2.COLOR_BGR2GRAY)
+                if detected:
+                    # pre-processing
+                    height, width = img.shape[:2]
 
-                # DEBUG
-                #---------------------------------------------------------------------------
-                if debug:
-                    print(" *** DEBUG: initial check")
-                    print(str(width) + "x" + str(height))
-                    if image_debug:
-                        cv2.imshow('image', img)
-                        cv2.imshow('gray image', gray_img)
-                        #cv2.imshow('gray blurred image', gray_blur_img)
-                        cv2.waitKey(0)
-                        cv2.destroyAllWindows()
-                #---------------------------------------------------------------------------
+                    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    blur_img = cv2.medianBlur(img, KERNEL_SIZE)
 
-                # processing
-                # ---------------------------------------------------------------------------
-                # TODO: make a decision on this
-                # use one of 2 methods:
-                #   1. SIFT
-                #   2. combination of feature detection (circles, color, contrast, etc.)
-                # Method 1:
-                #  - <SIFT method details>
-
-
-                # Method 2: 
-                #  - color
-                orig_hsv_img, hsv_img = getHsvMask(blur_img)
-
-                # get edge image
-                edge_img = cv2.Canny(hsv_img, 0, 255, apertureSize=3, L2gradient=False)
-
-                # DEBUG: check edge image
-                #---------------------------------------------------------------------------
-                if image_debug:
-                    print(" *** DEBUG: display edge img")
-                    cv2.imshow('edge img', edge_img)
-                    cv2.waitKey(0)
-                    cv2.destroyAllWindows()
-                    #exit()
-                #---------------------------------------------------------------------------
-
-                #  - circles
-                x_c, y_c, r, tstamp = getBallLoc(edge_img)
-                if (0 == x_c) and (0 == y_c) and (0 == r) and (0 == tstamp):
-                    num_not_found += 1
-                    continue
-
-                # DEBUG
-                #---------------------------------------------------------------------------
-                if debug:
-                    print(" *** DEBUG: check detected circle info")
-                    if advanced_debug:
-                        for h in range((y_c-r),(y_c+r)):
-                            for w in range((x_c-r),(x_c+r)):
-                                print(hsv_img[h][w])
-                                #cv2.circle(hsv_img, (w, h), 1, (255, 255, 255), 1)
-                                cv2.imshow("test", hsv_img)
-                                cv2.waitKey(1)
+                    # DEBUG
+                    #---------------------------------------------------------------------------
+                    if debug:
+                        print(" *** DEBUG: initial check")
+                        print(str(width) + "x" + str(height))
+                        if image_debug:
+                            cv2.imshow('image', img)
+                            cv2.imshow('gray image', gray_img)
                             cv2.waitKey(0)
+                            cv2.destroyAllWindows()
+                    #---------------------------------------------------------------------------
+
+                    # processing
+                    #  - color
+                    orig_hsv_img, hsv_img = getHsvMask(blur_img)
+
+                    # get edge image
+                    edge_img = cv2.Canny(hsv_img, 0, 255, apertureSize=3, L2gradient=False)
+
+                    # DEBUG: check edge image
+                    #---------------------------------------------------------------------------
+                    if image_debug:
+                        print(" *** DEBUG: display edge img")
+                        cv2.imshow('edge img', edge_img)
                         cv2.waitKey(0)
                         cv2.destroyAllWindows()
-                    print("x_c: ", x_c, ", y_c: ", y_c, ", r: ", r, ", tstamp: ", tstamp)
-                    #exit()
-                #---------------------------------------------------------------------------
+                        #exit()
+                    #---------------------------------------------------------------------------
 
-                #  - determine whether to keep or not
-                found = checkCircle(orig_hsv_img, hsv_img, x_c, y_c, r, .7, height, width)
-                
-                # DEBUG
-                if debug:
-                    print(" *** DEBUG: check if acceptable circle found")
-                    print("found? ", found)
-                    #exit()
+                    #  - circles
+                    x_c, y_c, r, tstamp = getBallLoc(edge_img)
+                    if (0 == x_c) and (0 == y_c) and (0 == r) and (0 == tstamp):
+                        num_not_found += 1
+                        continue
 
-                # results
-                # ---------------------------------------------------------------------------
-                if found:
-                    num_found += 1
+                    # DEBUG
+                    #---------------------------------------------------------------------------
+                    if debug:
+                        print(" *** DEBUG: check detected circle info")
+                        if advanced_debug:
+                            for h in range((y_c-r),(y_c+r)):
+                                for w in range((x_c-r),(x_c+r)):
+                                    print(hsv_img[h][w])
+                                    #cv2.circle(hsv_img, (w, h), 1, (255, 255, 255), 1)
+                                    cv2.imshow("test", hsv_img)
+                                    cv2.waitKey(1)
+                                cv2.waitKey(0)
+                            cv2.waitKey(0)
+                            cv2.destroyAllWindows()
+                        print("x_c: ", x_c, ", y_c: ", y_c, ", r: ", r, ", tstamp: ", tstamp)
+                        #exit()
+                    #---------------------------------------------------------------------------
 
-                    #  - distance to ball
-                    dist, angle = getBallDist(x_c, y_c, r, height, width)
+                    #  - determine whether to keep or not
+                    found = checkCircle(orig_hsv_img, hsv_img, x_c, y_c, r, .7, height, width)
 
-                    # output information
-                    # ---------------------------------------------------------------------------
-                    # output information structure:
-                    #   [x center, y center, radius, distance to ball, angle of ball, timestamp]
-                    output_info = [x_c, y_c, r, dist, angle, tstamp]
-                    # NOTE: replace <placeholder> code with what will be used for the image input
-                    # <placeholder>
-                    print(output_info)
-                    #return output_info
+                    # DEBUG
+                    if debug:
+                        print(" *** DEBUG: check if acceptable circle found")
+                        print("found? ", found)
+                        #exit()
+
+                    # results
+                    if found:
+                        num_found += 1
+
+                        #  - distance to ball
+                        dist, angle = getBallDist(x_c, y_c, r, height, width)
+
+                        # output information
+                        # output information structure:
+                        #   [x center, y center, radius, distance to ball, angle of ball, timestamp]
+                        output_info = [x_c, y_c, r, dist, angle, tstamp]
+                        # TODO: replace below (i.e. between ***) with posting info to topic
+                        # ***************************************************************************
+                        print(output_info)
+                        # ***************************************************************************
+                    else:
+                        num_not_found += 1
                 else:
-                    num_not_found += 1
-            else:
-                time.sleep(.05)
+                    time.sleep(.05)
 
-    print("num found: ", num_found, ", num not found: ", num_not_found)
-    print("end of main loop")
+    # DEBUG
+    if debug:
+        print("num found: ", num_found, ", num not found: ", num_not_found)
+        print("end of main loop")
 
+    sess.close
     return 0
 
 
